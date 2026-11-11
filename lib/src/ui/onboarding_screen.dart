@@ -27,6 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _api = TextEditingController(text: kWerkstatt ? kWerkstattApiBase : kGithubApiBase);
   bool _busy = false;
   bool _obscure = true;
+  bool _obscureToken = true;
   String? _error;
 
   AppState get state => widget.state;
@@ -91,7 +92,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             field(_name, 'Dein Name', helper: 'Erscheint bei Änderungen („Sarah hat Milch hinzugefügt“)'),
             field(_owner, 'GitHub-Besitzer'),
             field(_repo, 'Daten-Repository', hint: 'z. B. encrypted-shopping-gemeinsam'),
-            field(_token, 'Fine-grained Token', secret: true, helper: 'Nur „Contents: Read and write“ auf dieses Repo'),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _token,
+                obscureText: _obscureToken,
+                autocorrect: false,
+                enableSuggestions: false,
+                keyboardType: TextInputType.visiblePassword,
+                decoration: InputDecoration(
+                  labelText: 'Fine-grained Token',
+                  helperText: 'Nur „Contents: Read and write“ auf dieses Repo',
+                  suffixIcon: IconButton(
+                    tooltip: _obscureToken ? 'Token anzeigen' : 'Token verbergen',
+                    icon: Icon(_obscureToken ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () => setState(() => _obscureToken = !_obscureToken),
+                  ),
+                ),
+                validator: (v) => (v ?? '').trim().isEmpty ? 'Pflichtfeld' : null,
+              ),
+            ),
             TextFormField(
               controller: _pass,
               obscureText: _obscure,
