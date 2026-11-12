@@ -25,6 +25,7 @@ Beim ersten Start fragt die App nach dem privaten Daten-Repo, einem Fine-grained
 - Katalog mit rund 190 Artikeln in 15 Ladenbereichen, Sortierung nach Ladenbereich
 - Einheitliche **Piktogramme** auf allen Handys und im Widget: [Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (Microsoft, MIT) im Stil *Flat*, ergänzt um eigene Symbole im selben Stil (`piktogramme/`); Symbol je Artikel änderbar (lange drücken)
 - Suche mit Synonymen, Details per Zahl („Milch 2 l“), eigene Artikel
+- **Rezepte übernehmen** über *Teilen*: Rezeptlink aus Chefkoch, Lecker, Kitchen Stories, EAT SMARTER u. a. (alle Seiten mit schema.org-Rezeptdaten) oder eine Zutatenliste als Text → Zutaten prüfen, Portionen anpassen, auf eine Liste setzen
 - Vorschläge aus dem Kaufverlauf (übliches Intervall abgelaufen)
 - Benachrichtigungen, wenn die andere Person etwas hinzufügt, einkauft oder „Ich gehe einkaufen“ meldet
 - Startbildschirm-**Widget**: zeigt die offenen Artikel einer Liste (je Widget wählbar), antippen hakt ab – ohne die App zu öffnen

@@ -100,6 +100,25 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     return i;
   }
 
+  /// Übernimmt Zutaten (Name, Menge) aus einem Rezept auf eine Liste. Steht ein
+  /// Artikel schon drauf, wird die Menge ergänzt („2 l + 500 ml“).
+  Future<int> addZutaten(String listId, List<(String, String)> zutaten) async {
+    var n = 0;
+    for (final (name, spec) in zutaten) {
+      final existing = repo.itemByName(listId, name);
+      var s = spec;
+      if (existing != null && existing.needed && existing.spec.isNotEmpty && spec.isNotEmpty) {
+        s = existing.spec == spec ? spec : '${existing.spec} + $spec';
+      }
+      await repo.addItem(listId, name, spec: s);
+      n++;
+    }
+    final l = repo.list(listId);
+    if (l != null) selectList(l);
+    _changed();
+    return n;
+  }
+
   Future<void> bought(ShopItem i) async {
     await repo.markBought(i);
     _changed();

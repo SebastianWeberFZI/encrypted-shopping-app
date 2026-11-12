@@ -4,14 +4,14 @@ import 'piktos.g.dart';
 /// Welches Piktogramm zeigt ein Artikel?
 ///
 /// 1. ein selbst gewähltes Symbol ([icon]),
-/// 2. das Symbol des Katalogartikels gleichen Namens,
+/// 2. das Symbol des Katalogartikels gleichen Namens (oder Synonyms),
 /// 3. das Fluent-Emoji zum gespeicherten [emoji],
 /// 4. sonst null – dann wird das Emoji als Text gezeigt (z. B. ein Emoji,
 ///    das nicht mitgeliefert ist, oder Daten einer neueren App-Version).
 String? resolvePikto({String? icon, String? name, String? emoji}) {
   if (icon != null && kPiktos.contains(icon)) return icon;
   if (name != null) {
-    final c = catalogLookup(name);
+    final c = catalogLookupOrAlias(name);
     if (c != null && kPiktos.contains(c.pikto)) return c.pikto;
   }
   if (emoji != null && emoji.isNotEmpty) {

@@ -7,10 +7,12 @@ import 'package:home_widget/home_widget.dart';
 import '../app_state.dart';
 import '../models/catalog.dart';
 import '../models/shopping_models.dart';
+import '../services/share_service.dart';
 import 'item_sheet.dart';
 import 'item_tile.dart';
 import 'lists_screen.dart';
 import 'pikto.dart';
+import 'rezept_screen.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
 
@@ -34,6 +36,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (Platform.isAndroid) {
       HomeWidget.initiallyLaunchedFromHomeWidget().then(_handleWidgetUri).catchError((_) {});
       _widgetClicks = HomeWidget.widgetClicked.listen(_handleWidgetUri, onError: (_) {});
+      ShareService.initial().then((t) {
+        if (t != null) _handleShare(t);
+      });
+      ShareService.listen(_handleShare);
     }
   }
 
@@ -45,6 +51,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Aus dem Widget: einkauf://list?list=… (Liste zeigen), einkauf://add?list=… (Artikel suchen).
+  /// Aus einer anderen App geteilt (Rezeptlink oder Zutatenliste).
+  void _handleShare(String text) {
+    if (!mounted || text.trim().isEmpty) return;
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    if (state.currentList == null) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => RezeptScreen(state: state, text: text)));
+  }
+
   void _handleWidgetUri(Uri? uri) {
     if (uri == null || !mounted) return;
     Navigator.of(context).popUntil((r) => r.isFirst);

@@ -37,6 +37,8 @@ void main() {
     expect(resolvePikto(icon: 'lachs', name: 'Milch', emoji: '🥛'), 'lachs');
     expect(resolvePikto(name: 'Lachs', emoji: '🐟'), 'lachs');
     expect(resolvePikto(name: 'lachs', emoji: '🐟'), 'lachs');
+    expect(resolvePikto(name: 'Petersilie', emoji: '🥦'), 'u1f33f');
+    expect(resolvePikto(name: 'Paprikapulver', emoji: '🧂'), 'gewuerze');
     expect(resolvePikto(name: 'Mein Spezialartikel', emoji: '🍎'), 'u1f34e');
     expect(resolvePikto(name: 'Mein Spezialartikel', emoji: '🌶️'), 'u1f336');
     expect(resolvePikto(icon: 'gibt-es-nicht', name: 'X', emoji: '🦄'), isNull);

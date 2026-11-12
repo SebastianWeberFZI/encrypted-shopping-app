@@ -62,6 +62,15 @@ final Map<String, CatalogItem> _byName = {for (final c in kCatalog) normalizeNam
 
 CatalogItem? catalogLookup(String name) => _byName[normalizeName(name)];
 
+final Map<String, CatalogItem> _byAlias = {
+  for (final c in kCatalog.reversed)
+    for (final a in c.aliases) normalizeName(a): c,
+};
+
+/// Katalogartikel zu einem Namen oder Synonym („Petersilie“ → Kräuter),
+/// z. B. für das passende Symbol.
+CatalogItem? catalogLookupOrAlias(String name) => catalogLookup(name) ?? _byAlias[normalizeName(name)];
+
 /// Suche über Namen und Synonyme; Treffer am Wortanfang zuerst.
 List<CatalogItem> catalogSearch(String query) {
   final q = normalizeName(query);
@@ -91,7 +100,7 @@ const List<CatalogItem> kCatalog = [
   CatalogItem('Birnen', '🍐', 'obst', aliases: ['birne']),
   CatalogItem('Orangen', '🍊', 'obst', aliases: ['apfelsinen', 'orange']),
   CatalogItem('Mandarinen', '🍊', 'obst', aliases: ['clementinen'], icon: 'mandarinen'),
-  CatalogItem('Zitronen', '🍋', 'obst', aliases: ['zitrone']),
+  CatalogItem('Zitronen', '🍋', 'obst', aliases: ['zitrone', 'zitronensaft']),
   CatalogItem('Limetten', '🍋', 'obst', aliases: ['limette'], icon: 'limetten'),
   CatalogItem('Trauben', '🍇', 'obst', aliases: ['weintrauben']),
   CatalogItem('Erdbeeren', '🍓', 'obst'),
@@ -109,7 +118,7 @@ const List<CatalogItem> kCatalog = [
   CatalogItem('Cherrytomaten', '🍅', 'obst', aliases: ['kirschtomaten', 'rispentomaten', 'cocktailtomaten'], icon: 'cherrytomaten'),
   CatalogItem('Gurke', '🥒', 'obst', aliases: ['gurken', 'salatgurke']),
   CatalogItem('Zucchini', '🥒', 'obst', icon: 'zucchini'),
-  CatalogItem('Paprika', '🫑', 'obst', aliases: ['paprikaschoten']),
+  CatalogItem('Paprika', '🫑', 'obst'),
   CatalogItem('Karotten', '🥕', 'obst', aliases: ['möhren', 'karotte']),
   CatalogItem('Kartoffeln', '🥔', 'obst', aliases: ['kartoffel']),
   CatalogItem('Süßkartoffeln', '🍠', 'obst', aliases: ['süßkartoffel']),
@@ -133,7 +142,7 @@ const List<CatalogItem> kCatalog = [
   CatalogItem('Radieschen', '🌱', 'obst', icon: 'radieschen'),
   CatalogItem('Chili', '🌶️', 'obst', aliases: ['peperoni']),
   CatalogItem('Basilikum', '🌿', 'obst', icon: 'basilikum'),
-  CatalogItem('Kräuter', '🌿', 'obst', aliases: ['petersilie', 'schnittlauch', 'dill', 'koriander']),
+  CatalogItem('Kräuter', '🌿', 'obst', aliases: ['petersilie', 'schnittlauch', 'dill', 'koriander', 'thymian', 'rosmarin', 'salbei', 'minze']),
   CatalogItem('Oliven', '🫒', 'obst'),
   // Brot & Gebäck
   CatalogItem('Brot', '🍞', 'brot', aliases: ['bauernbrot', 'mischbrot', 'vollkornbrot'], icon: 'brot'),
@@ -154,13 +163,13 @@ const List<CatalogItem> kCatalog = [
   CatalogItem('Joghurt', '🥣', 'milch', aliases: ['jogurt'], icon: 'joghurt'),
   CatalogItem('Quark', '🥣', 'milch', aliases: ['skyr'], icon: 'quark'),
   CatalogItem('Sahne', '🥛', 'milch', aliases: ['schlagsahne'], icon: 'sahne'),
-  CatalogItem('Schmand', '🥣', 'milch', aliases: ['saure sahne', 'crème fraîche', 'creme fraiche'], icon: 'schmand'),
+  CatalogItem('Schmand', '🥣', 'milch', aliases: ['saure sahne', 'crème fraîche', 'creme fraiche', 'sauerrahm'], icon: 'schmand'),
   CatalogItem('Frischkäse', '🧀', 'milch', icon: 'frischkaese'),
   CatalogItem('Käse', '🧀', 'milch', aliases: ['gouda', 'emmentaler', 'bergkäse']),
   CatalogItem('Mozzarella', '🧀', 'milch', icon: 'mozzarella'),
   CatalogItem('Parmesan', '🧀', 'milch', aliases: ['hartkäse', 'grana padano'], icon: 'parmesan'),
   CatalogItem('Feta', '🧀', 'milch', aliases: ['schafskäse', 'hirtenkäse'], icon: 'feta'),
-  CatalogItem('Eier', '🥚', 'milch', aliases: ['ei']),
+  CatalogItem('Eier', '🥚', 'milch', aliases: ['ei', 'eigelb', 'eiweiß']),
   CatalogItem('Pudding', '🍮', 'milch', aliases: ['dessert']),
   // Fleisch, Fisch & Tofu
   CatalogItem('Hähnchen', '🍗', 'fleisch', aliases: ['hühnchen', 'geflügel', 'hähnchenbrust']),
@@ -176,7 +185,7 @@ const List<CatalogItem> kCatalog = [
   CatalogItem('Garnelen', '🦐', 'fleisch', aliases: ['shrimps', 'krabben']),
   CatalogItem('Tofu', '🍱', 'fleisch', aliases: ['veggie'], icon: 'tofu'),
   // Nudeln, Reis & Vorrat
-  CatalogItem('Nudeln', '🍝', 'vorrat', aliases: ['pasta', 'penne', 'fusilli'], icon: 'nudeln'),
+  CatalogItem('Nudeln', '🍝', 'vorrat', aliases: ['pasta', 'penne', 'fusilli', 'lasagneplatten', 'bandnudeln', 'spätzle'], icon: 'nudeln'),
   CatalogItem('Spaghetti', '🍝', 'vorrat'),
   CatalogItem('Reis', '🍚', 'vorrat', aliases: ['basmati']),
   CatalogItem('Couscous', '🍚', 'vorrat', aliases: ['bulgur', 'quinoa'], icon: 'couscous'),
@@ -193,8 +202,8 @@ const List<CatalogItem> kCatalog = [
   CatalogItem('Zucker', '🍬', 'zutaten', aliases: ['puderzucker'], icon: 'zucker'),
   CatalogItem('Salz', '🧂', 'zutaten'),
   CatalogItem('Pfeffer', '🧂', 'zutaten', icon: 'pfeffer'),
-  CatalogItem('Olivenöl', '🫒', 'zutaten', aliases: ['öl'], icon: 'olivenoel'),
-  CatalogItem('Speiseöl', '🫒', 'zutaten', aliases: ['sonnenblumenöl', 'rapsöl'], icon: 'speiseoel'),
+  CatalogItem('Olivenöl', '🫒', 'zutaten', icon: 'olivenoel'),
+  CatalogItem('Speiseöl', '🫒', 'zutaten', aliases: ['öl', 'sonnenblumenöl', 'rapsöl', 'pflanzenöl', 'bratöl'], icon: 'speiseoel'),
   CatalogItem('Essig', '🍶', 'zutaten', aliases: ['balsamico'], icon: 'essig'),
   CatalogItem('Hefe', '🍞', 'zutaten', aliases: ['trockenhefe'], icon: 'hefe'),
   CatalogItem('Backpulver', '🧁', 'zutaten', aliases: ['natron', 'vanillezucker'], icon: 'backpulver'),
@@ -204,7 +213,7 @@ const List<CatalogItem> kCatalog = [
   CatalogItem('Tomatenmark', '🍅', 'zutaten', icon: 'tomatenmark'),
   CatalogItem('Gemüsebrühe', '🍲', 'zutaten', aliases: ['brühe']),
   CatalogItem('Sojasauce', '🍶', 'zutaten', aliases: ['sojasoße'], icon: 'sojasauce'),
-  CatalogItem('Gewürze', '🌶️', 'zutaten', aliases: ['paprikapulver', 'curry', 'zimt', 'oregano'], icon: 'gewuerze'),
+  CatalogItem('Gewürze', '🌶️', 'zutaten', aliases: ['paprikapulver', 'curry', 'zimt', 'oregano', 'chilipulver', 'cayennepfeffer', 'muskat', 'muskatnuss', 'lorbeer', 'lorbeerblätter', 'lorbeerblatt', 'kreuzkümmel', 'kurkuma', 'gewürz'], icon: 'gewuerze'),
   // Frühstück & Aufstriche
   CatalogItem('Marmelade', '🍓', 'fruehstueck', aliases: ['konfitüre'], icon: 'marmelade'),
   CatalogItem('Honig', '🍯', 'fruehstueck'),
