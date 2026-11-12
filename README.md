@@ -22,7 +22,8 @@ Beim ersten Start fragt die App nach dem privaten Daten-Repo, einem Fine-grained
 ## Funktionen
 - Mehrere Listen (Supermarkt, Drogerie, …), Farbe und Symbol je Liste
 - Kachel-Ansicht: antippen = eingekauft, Rückgängig; „Zuletzt verwendet“ zum schnellen Wiederhinzufügen
-- Katalog mit ~160 Artikeln in 15 Ladenbereichen (Emoji-Symbole), Sortierung nach Ladenbereich
+- Katalog mit rund 190 Artikeln in 15 Ladenbereichen, Sortierung nach Ladenbereich
+- Einheitliche **Piktogramme** auf allen Handys und im Widget: [Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (Microsoft, MIT) im Stil *Flat*, ergänzt um eigene Symbole im selben Stil (`piktogramme/`); Symbol je Artikel änderbar (lange drücken)
 - Suche mit Synonymen, Details per Zahl („Milch 2 l“), eigene Artikel
 - Vorschläge aus dem Kaufverlauf (übliches Intervall abgelaufen)
 - Benachrichtigungen, wenn die andere Person etwas hinzufügt, einkauft oder „Ich gehe einkaufen“ meldet

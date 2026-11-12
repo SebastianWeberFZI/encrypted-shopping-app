@@ -172,6 +172,12 @@ class SettingsScreen extends StatelessWidget {
                 title: Text('Version ${snap.data?.version ?? ''}${kWerkstatt ? ' (Werkstatt)' : ''}'),
               ),
             ),
+            ListTile(
+              leading: const Icon(Icons.description_outlined),
+              title: const Text('Lizenzen'),
+              subtitle: const Text('Symbole: Fluent Emoji von Microsoft (MIT) und eigene Ergänzungen'),
+              onTap: () => showLicensePage(context: context, applicationName: 'Einkaufsliste'),
+            ),
             if (kWerkstatt && defaultTargetPlatform == TargetPlatform.android)
               ListTile(
                 leading: const Icon(Icons.schedule_send_outlined),

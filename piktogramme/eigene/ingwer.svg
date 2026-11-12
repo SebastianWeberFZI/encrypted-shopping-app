@@ -1,0 +1,17 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="rotate(-12 16 17)">
+<rect x="3" y="14" width="26" height="9" rx="4.5" fill="#E2B26B"/>
+<ellipse cx="8" cy="12.5" rx="3" ry="4.5" fill="#E2B26B" transform="rotate(-25 8 12.5)"/>
+<ellipse cx="16.5" cy="11" rx="3.2" ry="5" fill="#E2B26B" transform="rotate(10 16.5 11)"/>
+<ellipse cx="24.5" cy="13" rx="2.8" ry="4" fill="#E2B26B" transform="rotate(30 24.5 13)"/>
+<ellipse cx="12" cy="24.5" rx="3" ry="3.5" fill="#E2B26B" transform="rotate(20 12 24.5)"/>
+<ellipse cx="22" cy="24" rx="2.6" ry="3.2" fill="#E2B26B" transform="rotate(-20 22 24)"/>
+<rect x="10.6" y="14.5" width="1.1" height="8" rx="0.55" fill="#C08A43"/>
+<rect x="19.4" y="14.5" width="1.1" height="8" rx="0.55" fill="#C08A43"/>
+<ellipse cx="16.5" cy="8.2" rx="1.6" ry="1" fill="#9BC46B"/>
+<ellipse cx="8" cy="9.2" rx="1.4" ry="0.9" fill="#9BC46B" transform="rotate(-25 8 9.2)"/>
+<rect x="5" y="15.5" width="5" height="1.4" rx="0.7" fill="#F4D39A"/>
+<rect x="13" y="15.5" width="5" height="1.4" rx="0.7" fill="#F4D39A"/>
+<ellipse cx="16" cy="9.5" rx="1" ry="1.8" fill="#F4D39A" transform="rotate(10 16 9.5)"/>
+</g>
+</svg>

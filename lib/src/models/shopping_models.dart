@@ -105,6 +105,7 @@ class ShopItem {
     required this.listId,
     required this.name,
     this.emoji = '🛍️',
+    this.icon,
     this.category = 'sonstiges',
     this.spec = '',
     this.status = ItemStatus.needed,
@@ -135,6 +136,9 @@ class ShopItem {
   final String listId;
   String name;
   String emoji;
+
+  /// Selbst gewähltes Piktogramm (Schlüssel in assets/piktos); null = automatisch.
+  String? icon;
   String category;
   String spec;
   ItemStatus status;
@@ -199,6 +203,7 @@ class ShopItem {
         'list_id': listId,
         'name': name,
         'emoji': emoji,
+        'icon': ?icon,
         'category': category,
         if (spec.isNotEmpty) 'spec': spec,
         'status': unknownStatus ?? status.name,
@@ -215,7 +220,7 @@ class ShopItem {
       };
 
   static const _known = {
-    'id', 'list_id', 'name', 'emoji', 'category', 'spec', 'status',
+    'id', 'list_id', 'name', 'emoji', 'icon', 'category', 'spec', 'status',
     'added_by', 'added_at', 'done_by', 'done_at', 'purchase_count',
     'purchase_history', 'updated_at', 'updated_by', 'schema_version',
   };
@@ -228,6 +233,7 @@ class ShopItem {
       listId: jStr(j['list_id']),
       name: jStr(j['name']),
       emoji: jStr(j['emoji'], '🛍️'),
+      icon: jStrOrNull(j['icon']),
       category: jStr(j['category'], 'sonstiges'),
       spec: jStr(j['spec']),
       status: status ?? ItemStatus.needed,
@@ -251,6 +257,7 @@ class CustomArticle {
     String? id,
     required this.name,
     this.emoji = '🛍️',
+    this.icon,
     this.category = 'sonstiges',
     DateTime? updatedAt,
     this.updatedBy = '',
@@ -263,6 +270,7 @@ class CustomArticle {
   final Map<String, dynamic> extra;
   String name;
   String emoji;
+  String? icon;
   String category;
   DateTime updatedAt;
   String updatedBy;
@@ -274,6 +282,7 @@ class CustomArticle {
         'id': id,
         'name': name,
         'emoji': emoji,
+        'icon': ?icon,
         'category': category,
         'updated_at': updatedAt.toIso8601String(),
         'updated_by': updatedBy,
@@ -281,7 +290,7 @@ class CustomArticle {
       };
 
   static const _known = {
-    'id', 'name', 'emoji', 'category', 'updated_at', 'updated_by',
+    'id', 'name', 'emoji', 'icon', 'category', 'updated_at', 'updated_by',
     'schema_version',
   };
 
@@ -290,6 +299,7 @@ class CustomArticle {
         id: _id(j, path, 'Katalogartikel'),
         name: jStr(j['name']),
         emoji: jStr(j['emoji'], '🛍️'),
+        icon: jStrOrNull(j['icon']),
         category: jStr(j['category'], 'sonstiges'),
         updatedAt: jDate(j['updated_at']),
         updatedBy: jStr(j['updated_by']),

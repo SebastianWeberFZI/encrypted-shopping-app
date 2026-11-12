@@ -92,10 +92,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   // ------------------------------------------------------------ Artikel
 
-  Future<ShopItem?> add(String name, {String? emoji, String? category, String spec = ''}) async {
+  Future<ShopItem?> add(String name, {String? emoji, String? icon, String? category, String spec = ''}) async {
     final l = currentList;
     if (l == null || name.trim().isEmpty) return null;
-    final i = await repo.addItem(l.id, name, emoji: emoji, category: category, spec: spec);
+    final i = await repo.addItem(l.id, name, emoji: emoji, icon: icon, category: category, spec: spec);
     _changed();
     return i;
   }

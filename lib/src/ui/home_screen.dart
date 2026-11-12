@@ -10,6 +10,7 @@ import '../models/shopping_models.dart';
 import 'item_sheet.dart';
 import 'item_tile.dart';
 import 'lists_screen.dart';
+import 'pikto.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
 
@@ -126,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(l.emoji, style: const TextStyle(fontSize: 22)),
+                  Pikto(emoji: l.emoji, size: 28),
                   const SizedBox(width: 8),
                   Flexible(child: Text(l.name, overflow: TextOverflow.ellipsis)),
                   const Icon(Icons.arrow_drop_down),
@@ -206,6 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     builder: (c, i) => ItemTile(
                       key: ValueKey('n${needed[i].id}'),
                       emoji: needed[i].emoji,
+                      icon: needed[i].icon,
                       name: needed[i].name,
                       spec: needed[i].spec,
                       style: TileStyle.needed,
@@ -230,6 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         width: 96,
                         child: ItemTile(
                           emoji: suggestions[i].emoji,
+                          icon: suggestions[i].icon,
                           name: suggestions[i].name,
                           style: TileStyle.suggestion,
                           color: color,
@@ -251,6 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     builder: (c, i) => ItemTile(
                       key: ValueKey('r${recent[i].id}'),
                       emoji: recent[i].emoji,
+                      icon: recent[i].icon,
                       name: recent[i].name,
                       spec: recent[i].spec,
                       style: TileStyle.recent,
@@ -276,9 +280,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _catalogSection(BuildContext context, Category cat, ShoppingList l, int cols, Color color) {
     final theme = Theme.of(context);
     final custom = state.repo.customArticles.where((a) => a.category == cat.key);
-    final entries = <(String, String)>[
-      for (final c in kCatalog.where((c) => c.category == cat.key)) (c.name, c.emoji),
-      for (final a in custom) (a.name, a.emoji),
+    final entries = <(String, String, String?)>[
+      for (final c in kCatalog.where((c) => c.category == cat.key)) (c.name, c.emoji, null),
+      for (final a in custom) (a.name, a.emoji, a.icon),
     ];
     if (entries.isEmpty) return [];
     final open = _openCategories.contains(cat.key);
@@ -289,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(children: [
-              Text(cat.emoji, style: const TextStyle(fontSize: 20)),
+              Pikto(emoji: cat.emoji, size: 26),
               const SizedBox(width: 12),
               Expanded(child: Text(cat.name, style: theme.textTheme.bodyLarge)),
               Text('${entries.length}', style: TextStyle(color: theme.colorScheme.outline)),
@@ -305,16 +309,19 @@ class _HomeScreenState extends State<HomeScreen> {
             columns: cols,
             count: entries.length,
             builder: (c, i) {
-              final (name, emoji) = entries[i];
+              final (name, emoji, icon) = entries[i];
               final existing = state.repo.itemByName(l.id, name);
               final onList = existing?.needed ?? false;
               return ItemTile(
                 emoji: emoji,
+                icon: existing?.icon ?? icon,
                 name: name,
                 style: TileStyle.catalog,
                 selected: onList,
                 color: color,
-                onTap: () => onList ? state.removeFromList(existing!) : state.add(name, emoji: emoji, category: cat.key),
+                onTap: () => onList
+                    ? state.removeFromList(existing!)
+                    : state.add(name, emoji: emoji, icon: icon, category: cat.key),
                 onLongPress: existing == null ? null : () => showItemSheet(context, state, existing),
               );
             },
@@ -348,7 +355,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           for (final l in state.lists)
             ListTile(
-              leading: CircleAvatar(backgroundColor: Color(l.color).withValues(alpha: 0.15), child: Text(l.emoji)),
+              leading: CircleAvatar(
+                  backgroundColor: Color(l.color).withValues(alpha: 0.15), child: Pikto(emoji: l.emoji, size: 24)),
               title: Text(l.name),
               trailing: Text('${state.repo.needed(l.id).length}',
                   style: TextStyle(color: Color(l.color), fontWeight: FontWeight.w700)),

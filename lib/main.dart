@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'src/app_state.dart';
 import 'src/background/background_worker.dart';
 import 'src/core/source_config.dart';
+import 'src/models/lizenzen.dart';
 import 'src/services/notification_service.dart';
 import 'src/settings.dart';
 import 'src/shopping_repository.dart';
@@ -19,6 +20,7 @@ const kSeed = Color(0xFF2F7D6B);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  registerLizenzen();
   final settings = await LocalSettings.load();
   final dir = await getApplicationSupportDirectory();
   final repo = ShoppingRepository(

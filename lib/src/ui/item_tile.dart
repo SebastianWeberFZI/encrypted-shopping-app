@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import 'pikto.dart';
+
 enum TileStyle { needed, recent, catalog, suggestion }
 
-/// Quadratische Artikelkachel (Emoji + Name + Details).
+/// Quadratische Artikelkachel (Piktogramm + Name + Details).
 class ItemTile extends StatelessWidget {
   const ItemTile({
     super.key,
     required this.emoji,
+    this.icon,
     required this.name,
     this.spec = '',
     required this.style,
@@ -18,6 +21,7 @@ class ItemTile extends StatelessWidget {
   });
 
   final String emoji;
+  final String? icon;
   final String name;
   final String spec;
   final TileStyle style;
@@ -53,8 +57,8 @@ class ItemTile extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(6, 8, 6, 6),
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               Opacity(
-                opacity: style == TileStyle.recent || style == TileStyle.catalog ? 0.85 : 1,
-                child: Text(emoji, style: const TextStyle(fontSize: 30, height: 1.1)),
+                opacity: style == TileStyle.recent || style == TileStyle.catalog ? 0.92 : 1,
+                child: Pikto(icon: icon, name: name, emoji: emoji, size: 40),
               ),
               const SizedBox(height: 6),
               // Lange Einzelwörter ("Spülmaschinentabs") verkleinern statt mitten im Wort umbrechen

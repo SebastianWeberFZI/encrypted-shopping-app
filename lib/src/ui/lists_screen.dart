@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../models/shopping_models.dart';
+import 'pikto.dart';
 
 const kListColors = [
   0xFF2F7D6B, 0xFF3D6FB6, 0xFF8E5BB5, 0xFFC94F7C, 0xFFD2553F, 0xFFC9762B, 0xFF9A8A2E, 0xFF5D6D7E,
@@ -27,7 +28,8 @@ class ListsScreen extends StatelessWidget {
         body: ListView(children: [
           for (final l in state.lists)
             ListTile(
-              leading: CircleAvatar(backgroundColor: Color(l.color), child: Text(l.emoji)),
+              leading: CircleAvatar(
+                  backgroundColor: Color(l.color).withValues(alpha: 0.18), child: Pikto(emoji: l.emoji, size: 26)),
               title: Text(l.name),
               subtitle: Text('${state.repo.needed(l.id).length} zu kaufen · '
                   '${state.repo.recent(l.id).length} im Verlauf'),
@@ -54,7 +56,7 @@ class ListsScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Wrap(spacing: 6, runSpacing: 6, children: [
                 for (final e in kListEmojis)
-                  ChoiceChip(label: Text(e, style: const TextStyle(fontSize: 18)), selected: emoji == e,
+                  ChoiceChip(label: Pikto(emoji: e, size: 24), selected: emoji == e,
                       showCheckmark: false, onSelected: (_) => set(() => emoji = e)),
               ]),
               const SizedBox(height: 16),

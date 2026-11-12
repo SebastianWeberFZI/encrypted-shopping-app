@@ -1,0 +1,20 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="rotate(-10 9.0 21.25)">
+<rect x="1.5" y="15.5" width="15" height="11.5" rx="2.2" fill="#FFFFFF"/>
+<path d="M1.5 21.48H16.5V24.8C16.5 26.0 15.5 27.0 14.3 27.0H3.7C2.5 27.0 1.5 26.0 1.5 24.8Z" fill="#00A6ED"/>
+<rect x="1.5" y="21.02" width="15" height="0.92" fill="#DCE6F0"/>
+<circle cx="9" cy="21.48" r="2.7" fill="#F8312F"/>
+<circle cx="8.1" cy="20.58" r="0.8" fill="#FF8687"/>
+</g>
+<g transform="rotate(12 22.5 13.25)">
+<rect x="15" y="7.5" width="15" height="11.5" rx="2.2" fill="#FFFFFF"/>
+<path d="M15 13.48H30.0V16.8C30.0 18.0 29.0 19.0 27.8 19.0H17.2C16 19.0 15 18.0 15 16.8Z" fill="#00A6ED"/>
+<rect x="15" y="13.02" width="15" height="0.92" fill="#DCE6F0"/>
+<circle cx="22.5" cy="13.48" r="2.7" fill="#F8312F"/>
+<circle cx="21.6" cy="12.58" r="0.8" fill="#FF8687"/>
+</g>
+<circle cx="6" cy="8" r="2.2" fill="#D9F1FF"/>
+<circle cx="10.5" cy="4" r="1.4" fill="#D9F1FF"/>
+<circle cx="28" cy="25" r="1.6" fill="#D9F1FF"/>
+<circle cx="24.5" cy="28.5" r="1" fill="#D9F1FF"/>
+</svg>

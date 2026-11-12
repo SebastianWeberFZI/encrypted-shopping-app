@@ -7,6 +7,7 @@ import 'package:home_widget/home_widget.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../core/source_config.dart';
+import '../models/pikto.dart';
 import '../settings.dart';
 import '../shopping_repository.dart';
 
@@ -34,13 +35,20 @@ class ShoppingWidget {
     final data = {
       'default_list': current?.id ?? '',
       'lists': [
-        for (final l in lists) {'id': l.id, 'n': l.name, 'e': l.emoji, 'c': l.color}
+        for (final l in lists)
+          {'id': l.id, 'n': l.name, 'e': l.emoji, 'i': ?resolvePikto(emoji: l.emoji), 'c': l.color}
       ],
       'items': {
         for (final l in lists)
           l.id: [
             for (final i in repo.needed(l.id))
-              {'id': i.id, 'n': i.name, 'e': i.emoji, 's': i.spec}
+              {
+                'id': i.id,
+                'n': i.name,
+                'e': i.emoji,
+                'i': ?resolvePikto(icon: i.icon, name: i.name, emoji: i.emoji),
+                's': i.spec,
+              }
           ]
       },
     };
