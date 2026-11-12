@@ -77,6 +77,20 @@ class SettingsScreen extends StatelessWidget {
                 state.settingsChanged();
               },
             ),
+            if (defaultTargetPlatform == TargetPlatform.android)
+              SwitchListTile(
+                secondary: const Icon(Icons.screen_lock_portrait_outlined),
+                title: const Text('Liste auf dem Sperrbildschirm'),
+                subtitle: const Text('Offene Artikel der aktuellen Liste als angeheftete Benachrichtigung – '
+                    'antippen hakt ab, ohne zu entsperren'),
+                value: s.lockList,
+                onChanged: (v) async {
+                  if (v) await state.notifications.init();
+                  s.lockList = v;
+                  state.settingsChanged();
+                  await ShoppingWidget.setLockList(v);
+                },
+              ),
             ListTile(
               leading: const SizedBox(),
               title: const Text('Test-Benachrichtigung'),

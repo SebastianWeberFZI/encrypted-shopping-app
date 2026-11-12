@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import 'core/github_api.dart';
 import 'core/werkstatt.dart';
+import 'models/recipe.dart';
 import 'models/shopping_models.dart';
 import 'services/notification_service.dart';
 import 'services/widget_service.dart';
@@ -164,6 +165,18 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> saveCustomArticle(CustomArticle a) async {
     await repo.saveCustomArticle(a);
+    _changed();
+  }
+
+  // ------------------------------------------------------------ Rezepte
+
+  Future<void> saveRecipe(Recipe r) async {
+    await repo.saveRecipe(r);
+    _changed();
+  }
+
+  Future<void> deleteRecipe(Recipe r) async {
+    await repo.deleteRecipe(r);
     _changed();
   }
 

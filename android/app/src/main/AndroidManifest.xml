@@ -35,6 +35,14 @@
                 <action android:name="es.antonborri.home_widget.action.LAUNCH"/>
             </intent-filter>
         </activity>
+        <receiver
+            android:name=".LockListBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <!-- Teilen-Ziel: Rezeptlinks (Chefkoch & Co.) oder Zutatenlisten übernehmen -->
         <activity
             android:name=".ShareActivity"
@@ -100,6 +108,11 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Originalrezept im Browser öffnen -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>

@@ -11,6 +11,6 @@
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/widget_shopping"
     android:description="@string/widget_shopping_desc"
-    android:widgetCategory="home_screen"
+    android:widgetCategory="home_screen|keyguard"
     android:configure="de.sweber.encrypted_shopping_app.ShoppingWidgetConfigActivity"
     android:widgetFeatures="reconfigurable|configuration_optional" />

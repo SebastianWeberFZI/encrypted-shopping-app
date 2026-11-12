@@ -10,6 +10,7 @@ import 'core/source_config.dart';
 import 'core/sync_engine.dart';
 import 'models/catalog.dart';
 import 'models/json_util.dart';
+import 'models/recipe.dart';
 import 'models/shopping_models.dart';
 
 const String kAppId = 'encrypted-shopping';
@@ -69,6 +70,7 @@ class ShoppingRepository {
   List<ShopItem> _items = [];
   List<CustomArticle> _custom = [];
   List<Activity> _activities = [];
+  List<Recipe> _recipes = [];
 
   int get version => _version;
   void touch() => _version++;
@@ -101,7 +103,7 @@ class ShoppingRepository {
       api: api!,
       crypto: crypto,
       key: _key!,
-      managedDirs: const ['lists', 'items', 'catalog', 'activity'],
+      managedDirs: const ['lists', 'items', 'catalog', 'activity', 'recipes'],
       // Keine Konfliktkopien: eine doppelte "Milch" wäre schlimmer als ein
       // verlorener Zwischenstand.
     );
@@ -141,6 +143,10 @@ class ShoppingRepository {
     _custom = s == null
         ? []
         : s.inDir('catalog').map((e) => safe(() => CustomArticle.fromJson(e.value, path: e.key))).whereType<CustomArticle>().toList();
+    _recipes = s == null
+        ? []
+        : (s.inDir('recipes').map((e) => safe(() => Recipe.fromJson(e.value, path: e.key))).whereType<Recipe>().toList()
+          ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase())));
     _activities = s == null
         ? []
         : (s.inDir('activity').map((e) => safe(() => Activity.fromJson(e.value, path: e.key))).whereType<Activity>().toList()
@@ -166,6 +172,25 @@ class ShoppingRepository {
   List<Activity> get activities {
     _rebuild();
     return _activities;
+  }
+
+  /// Gespeicherte Rezepte, alphabetisch.
+  List<Recipe> get recipes {
+    _rebuild();
+    return _recipes;
+  }
+
+  Future<void> saveRecipe(Recipe r) async {
+    r.updatedAt = DateTime.now();
+    r.updatedBy = userName();
+    if (r.addedBy.isEmpty) r.addedBy = userName();
+    await store!.put(r.path, r.toJson());
+    touch();
+  }
+
+  Future<void> deleteRecipe(Recipe r) async {
+    await store!.delete(r.path);
+    touch();
   }
 
   ShoppingList? list(String id) => lists.where((l) => l.id == id).firstOrNull;

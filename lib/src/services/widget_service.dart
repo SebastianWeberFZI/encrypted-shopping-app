@@ -63,6 +63,16 @@ class ShoppingWidget {
     }
   }
 
+  /// Sperrbildschirm-Liste ein/aus: Kotlin (LockList) liest den Schalter aus
+  /// den Widget-Daten und zeichnet die Benachrichtigung beim nächsten Update.
+  static Future<void> setLockList(bool on) async {
+    if (!Platform.isAndroid) return;
+    try {
+      await HomeWidget.saveWidgetData<bool>('lock_list', on);
+      await HomeWidget.updateWidget(qualifiedAndroidName: provider);
+    } catch (_) {}
+  }
+
   static Future<bool> canPin() async {
     if (!Platform.isAndroid) return false;
     try {

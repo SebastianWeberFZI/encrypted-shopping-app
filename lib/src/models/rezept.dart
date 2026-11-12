@@ -55,14 +55,75 @@ class Zutat {
   }
 }
 
-/// Ein Rezept mit Zutaten.
+/// Ein Rezept mit Zutaten (aus einer Webseite, einem Text oder gespeichert).
 class Rezept {
-  Rezept({required this.titel, required this.zutaten, this.portionen, this.quelle});
+  Rezept({
+    required this.titel,
+    required this.zutaten,
+    this.portionen,
+    this.quelle,
+    List<String>? zeilen,
+    this.schritte = const [],
+    this.beschreibung = '',
+    this.bildUrl,
+    this.vorbereitung,
+    this.kochzeit,
+    this.gesamtzeit,
+    this.kategorie = '',
+    this.autor = '',
+    this.kalorien = '',
+  }) : zeilen = zeilen ?? [for (final z in zutaten) z.original];
   final String titel;
   final List<Zutat> zutaten;
   final int? portionen;
   final Uri? quelle;
+
+  /// Zutatenzeilen wie im Original (inkl. Zwischenüberschriften).
+  final List<String> zeilen;
+  final List<String> schritte;
+  final String beschreibung;
+  final Uri? bildUrl;
+  final int? vorbereitung;
+  final int? kochzeit;
+  final int? gesamtzeit;
+  final String kategorie;
+  final String autor;
+  final String kalorien;
 }
+
+/// Zeile mit umgerechneter Menge („400 g Mehl“ × 1,5 → „600 g Mehl“).
+String skaliereZeile(String zeile, double faktor) {
+  if ((faktor - 1).abs() < 0.001) return zeile;
+  final m = _mengeRe.firstMatch(zeile);
+  if (m == null) return zeile;
+  final a = _zahl(m.group(1)!);
+  if (a == null) return zeile;
+  final b = m.group(2) == null ? null : _zahl(m.group(2)!);
+  final neu = b == null
+      ? formatMenge(a * faktor)
+      : '${formatMenge(a * faktor)}–${formatMenge(b * faktor)}';
+  return '$neu ${zeile.substring(m.end)}';
+}
+
+/// ISO-8601-Dauer („PT1H40M“) in Minuten.
+int? isoMinuten(Object? v) {
+  if (v is num) return v > 0 ? v.round() : null;
+  if (v is! String) return null;
+  final m = RegExp(r'^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:\d+S)?)?$').firstMatch(v.trim());
+  if (m == null) return null;
+  final min = (int.tryParse(m.group(1) ?? '') ?? 0) * 1440 +
+      (int.tryParse(m.group(2) ?? '') ?? 0) * 60 +
+      (int.tryParse(m.group(3) ?? '') ?? 0);
+  return min > 0 ? min : null;
+}
+
+/// Wie [htmlText], aber Zeilenumbrüche bleiben erhalten.
+String htmlAbsatz(String s) => s
+    .replaceAll(RegExp(r'<br\s*/?>|</p>|</li>', caseSensitive: false), '\n')
+    .split('\n')
+    .map(htmlText)
+    .where((l) => l.isNotEmpty)
+    .join('\n');
 
 /// Zahl ohne überflüssige Nachkommastellen, mit Komma; große Gramm-/ml-Werte gerundet.
 String formatMenge(double v, [String einheit = '']) {
@@ -343,39 +404,118 @@ Uri? ersteAdresse(String text) {
 /// so machen es auch Chefkoch, Lecker, Kitchen Stories, EAT SMARTER u. v. m.
 Rezept? rezeptAusHtml(String html, {Uri? quelle}) {
   final scripts = RegExp(r'<script[^>]*application/ld\+json[^>]*>(.*?)</script>', dotAll: true, caseSensitive: false);
+  final bloecke = <Object?>[];
   for (final m in scripts.allMatches(html)) {
     final raw = m.group(1)!.trim();
-    Object? json;
     try {
-      json = jsonDecode(raw);
+      bloecke.add(jsonDecode(raw));
     } catch (_) {
       try {
-        json = jsonDecode(raw.replaceAll(RegExp(r'[\u0000-\u001F]+'), ' '));
+        bloecke.add(jsonDecode(raw.replaceAll(RegExp(r'[\u0000-\u001F]+'), ' ')));
       } catch (_) {
         continue;
       }
     }
-    final r = _findeRezept(json, 0);
+  }
+  // Verweise ({"@id": …}) auflösen, z. B. Bild und Autor bei Chefkoch
+  final ids = <String, Map>{};
+  void sammle(Object? j, int t) {
+    if (t > 8) return;
+    if (j is List) {
+      for (final e in j) {
+        sammle(e, t + 1);
+      }
+    } else if (j is Map) {
+      final id = j['@id'];
+      if (id is String && j.length > 1) ids[id] = j;
+      for (final v in j.values) {
+        sammle(v, t + 1);
+      }
+    }
+  }
+
+  for (final b in bloecke) {
+    sammle(b, 0);
+  }
+  Object? aufloesen(Object? v) {
+    if (v is Map && v.length == 1 && v['@id'] is String) return ids[v['@id']] ?? v;
+    return v;
+  }
+
+  for (final b in bloecke) {
+    final r = _findeRezept(b, 0);
     if (r == null) continue;
     final zutatenRoh = r['recipeIngredient'] ?? r['ingredients'];
     final zeilen = zutatenRoh is List
-        ? [for (final z in zutatenRoh) if (z is String) z]
+        ? [for (final z in zutatenRoh) if (z is String) htmlText(z)]
         : zutatenRoh is String
-            ? zutatenRoh.split(RegExp(r'\n|,\s(?=\d)'))
+            ? zutatenRoh.split(RegExp(r'\n|,\s(?=\d)')).map(htmlText).toList()
             : <String>[];
+    zeilen.removeWhere((z) => z.isEmpty);
     if (zeilen.isEmpty) continue;
     var titel = htmlText(r['name'] is String ? r['name'] as String : 'Rezept');
     if (quelle != null && quelle.host.contains('chefkoch')) {
       titel = titel.replaceFirst(RegExp(r'\s+von\s+\S+$'), '');
     }
+    final autor = aufloesen(r['author'] is List ? (r['author'] as List).firstOrNull : r['author']);
+    final kal = r['nutrition'] is Map ? (r['nutrition'] as Map)['calories'] : null;
     return Rezept(
       titel: titel,
       zutaten: [for (final z in zeilen) ...parseZutat(z)],
+      zeilen: zeilen,
       portionen: _portionen(r['recipeYield']),
       quelle: quelle,
+      schritte: _schritte(r['recipeInstructions'], aufloesen, 0),
+      beschreibung: r['description'] is String ? htmlAbsatz(r['description'] as String) : '',
+      bildUrl: _bild(aufloesen(r['image']), aufloesen, quelle),
+      vorbereitung: isoMinuten(r['prepTime']),
+      kochzeit: isoMinuten(r['cookTime']),
+      gesamtzeit: isoMinuten(r['totalTime']),
+      kategorie: {
+        for (final v in [r['recipeCategory'], r['recipeCuisine']])
+          for (final t in v is List ? v : [v])
+            if (t is String && htmlText(t).isNotEmpty) htmlText(t)
+      }.join(' · '),
+      autor: autor is Map && autor['name'] is String ? htmlText(autor['name'] as String) : (autor is String ? htmlText(autor) : ''),
+      kalorien: kal is String ? htmlText(kal) : '',
     );
   }
   return null;
+}
+
+List<String> _schritte(Object? v, Object? Function(Object?) aufloesen, int tiefe) {
+  v = aufloesen(v);
+  if (tiefe > 5 || v == null) return const [];
+  if (v is String) {
+    return htmlAbsatz(v).split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+  }
+  if (v is List) return [for (final e in v) ..._schritte(e, aufloesen, tiefe + 1)];
+  if (v is Map) {
+    final t = v['@type'];
+    if (t == 'HowToSection' || v['itemListElement'] != null) {
+      final name = v['name'] is String ? htmlText(v['name'] as String) : '';
+      final inner = _schritte(v['itemListElement'], aufloesen, tiefe + 1);
+      // Abschnittsnamen wie „Zubereitung“ sind keine eigene Überschrift wert
+      final ueber = name.isNotEmpty && !{'zubereitung', 'anleitung', 'instructions'}.contains(name.toLowerCase());
+      return [if (ueber && inner.isNotEmpty) '$name:', ...inner];
+    }
+    final text = v['text'] ?? v['name'];
+    if (text is String) return [htmlAbsatz(text)].where((l) => l.isNotEmpty).toList();
+  }
+  return const [];
+}
+
+Uri? _bild(Object? v, Object? Function(Object?) aufloesen, Uri? quelle) {
+  v = aufloesen(v);
+  String? url;
+  if (v is String) url = v;
+  if (v is List && v.isNotEmpty) return _bild(v.first, aufloesen, quelle);
+  if (v is Map) url = (v['url'] ?? v['contentUrl']) as String?;
+  if (url == null || url.isEmpty) return null;
+  final u = Uri.tryParse(url);
+  if (u == null) return null;
+  final abs = quelle != null ? quelle.resolveUri(u) : u;
+  return (abs.scheme == 'https' || abs.scheme == 'http') ? abs : null;
 }
 
 Map<String, dynamic>? _findeRezept(Object? j, int tiefe) {

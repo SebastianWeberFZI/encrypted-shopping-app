@@ -145,6 +145,7 @@ object ShopData {
         val manager = AppWidgetManager.getInstance(context)
         val ids = manager.getAppWidgetIds(ComponentName(context, ShoppingWidgetProvider::class.java))
         if (ids.isNotEmpty()) ShoppingWidgetProvider().onUpdate(context, manager, ids)
+        LockList.refresh(context)
     }
 
     fun launchIntent(context: Context, uri: String, requestCode: Int): PendingIntent {
@@ -164,6 +165,13 @@ object ShopData {
 }
 
 class ShoppingWidgetProvider : AppWidgetProvider() {
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        // Die App meldet geänderte Daten per Widget-Update – auch ohne Widget
+        // auf dem Startbildschirm soll die Sperrbildschirm-Liste mitziehen.
+        if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE) LockList.refresh(context)
+    }
+
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         val snap = ShopData.load(context)
         for (id in ids) update(context, manager, snap, id)

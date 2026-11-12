@@ -13,7 +13,7 @@ import 'src/models/lizenzen.dart';
 import 'src/services/notification_service.dart';
 import 'src/settings.dart';
 import 'src/shopping_repository.dart';
-import 'src/ui/home_screen.dart';
+import 'src/ui/main_shell.dart';
 import 'src/ui/onboarding_screen.dart';
 
 const kSeed = Color(0xFF2F7D6B);
@@ -77,7 +77,7 @@ class ShoppingApp extends StatelessWidget {
         home: !state.initialized
             ? const Scaffold(body: Center(child: CircularProgressIndicator()))
             : state.isConfigured
-                ? HomeScreen(state: state)
+                ? MainShell(state: state)
                 : OnboardingScreen(state: state),
       ),
     );

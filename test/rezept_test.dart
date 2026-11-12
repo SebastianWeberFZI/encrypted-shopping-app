@@ -1,4 +1,10 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:encrypted_shopping_app/src/models/recipe.dart';
 import 'package:encrypted_shopping_app/src/models/rezept.dart';
+import 'package:encrypted_shopping_app/src/services/rezept_import.dart';
+import 'package:image/image.dart' as img;
 import 'package:flutter_test/flutter_test.dart';
 
 Zutat eins(String zeile) {
@@ -150,6 +156,103 @@ void main() {
       expect(zutatenAusText('Für den Teig:\n200 g Mehl\nFür die Füllung:\nQuark').map((z) => z.name), ['Mehl', 'Quark']);
       expect(zutatenAusText('- 1 kg Kartoffeln\n• Quark\n\n* 2 Zwiebeln').map((z) => z.name),
           ['Kartoffeln', 'Quark', 'Zwiebeln']);
+    });
+  });
+
+  group('Alles vom Rezept', () {
+    const html = '''<html><head>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[
+ {"@type":"ImageObject","@id":"#bild","url":"/img/lasagne.jpg","width":800},
+ {"@type":"Person","@id":"#koch","name":"koch123"},
+ {"@type":"Recipe","name":"Lasagne","image":{"@id":"#bild"},"author":{"@id":"#koch"},
+  "description":"Klassisch &amp; einfach.<br>Gelingt immer.",
+  "recipeYield":"4","prepTime":"PT30M","cookTime":"PT1H","totalTime":"P0DT1H30M",
+  "recipeCategory":["Hauptspeise","Pasta"],"nutrition":{"@type":"NutritionInformation","calories":"650 kcal"},
+  "recipeIngredient":["500 g Hackfleisch","Für die Soße:","1 Dose Tomaten"],
+  "recipeInstructions":[
+   {"@type":"HowToSection","name":"Soße","itemListElement":[
+     {"@type":"HowToStep","text":"Hack anbraten."},{"@type":"HowToStep","text":"Tomaten dazu."}]},
+   {"@type":"HowToStep","text":"Schichten &amp; backen."}]}]}
+</script></head></html>''';
+
+    test('Schritte, Bild, Autor, Zeiten, Kategorie, Kalorien', () {
+      final r = rezeptAusHtml(html, quelle: Uri.parse('https://www.chefkoch.de/rezepte/1/Lasagne.html'))!;
+      expect(r.schritte, ['Soße:', 'Hack anbraten.', 'Tomaten dazu.', 'Schichten & backen.']);
+      expect(r.bildUrl.toString(), 'https://www.chefkoch.de/img/lasagne.jpg');
+      expect(r.autor, 'koch123');
+      expect(r.vorbereitung, 30);
+      expect(r.kochzeit, 60);
+      expect(r.gesamtzeit, 90);
+      expect(r.kategorie, 'Hauptspeise · Pasta');
+      expect(r.kalorien, '650 kcal');
+      expect(r.beschreibung, 'Klassisch & einfach.\nGelingt immer.');
+      expect(r.zeilen, ['500 g Hackfleisch', 'Für die Soße:', '1 Dose Tomaten']);
+    });
+
+    test('Anleitung als Text oder Liste von Texten', () {
+      final a = rezeptAusHtml('''<script type="application/ld+json">{"@type":"Recipe","name":"A",
+        "recipeIngredient":["Mehl"],"recipeInstructions":"Alles verrühren.\\nBacken."}</script>''')!;
+      expect(a.schritte, ['Alles verrühren.', 'Backen.']);
+      final b = rezeptAusHtml('''<script type="application/ld+json">{"@type":"Recipe","name":"B",
+        "recipeIngredient":["Mehl"],"recipeInstructions":["Rühren.","Backen."],"image":["https://x.de/1.jpg"]}</script>''')!;
+      expect(b.schritte, ['Rühren.', 'Backen.']);
+      expect(b.bildUrl.toString(), 'https://x.de/1.jpg');
+    });
+
+    test('ISO-Dauern', () {
+      expect(isoMinuten('PT45M'), 45);
+      expect(isoMinuten('PT1H15M'), 75);
+      expect(isoMinuten('P1D'), 1440);
+      expect(isoMinuten('PT0S'), isNull);
+      expect(isoMinuten('irgendwas'), isNull);
+      expect(isoMinuten(20), 20);
+    });
+
+    test('Zeilen skalieren', () {
+      expect(skaliereZeile('500 g Hackfleisch', 0.5), '250 g Hackfleisch');
+      expect(skaliereZeile('2-3 Zwiebeln', 2), '4–6 Zwiebeln');
+      expect(skaliereZeile('Salz und Pfeffer', 2), 'Salz und Pfeffer');
+      expect(skaliereZeile('½ TL Zimt', 2), '1 TL Zimt');
+    });
+
+    test('Gespeichertes Rezept: hin und zurück, unbekannte Felder bleiben', () {
+      final r = rezeptAusHtml(html, quelle: Uri.parse('https://www.chefkoch.de/rezepte/1/Lasagne.html'))!;
+      final rec = recipeAusRezept(r, bild: 'QUJD', von: 'Sebastian');
+      final json = rec.toJson()..['bewertung'] = 5;
+      final back = Recipe.fromJson(jsonDecode(jsonEncode(json)) as Map<String, dynamic>);
+      expect(back.title, 'Lasagne');
+      expect(back.servings, 4);
+      expect(back.ingredients, r.zeilen);
+      expect(back.steps, r.schritte);
+      expect(back.prepMinutes, 30);
+      expect(back.totalMinutes, 90);
+      expect(back.author, 'koch123');
+      expect(back.addedBy, 'Sebastian');
+      expect(back.sourceHost, 'chefkoch.de');
+      expect(back.imageBytes, utf8.encode('ABC'));
+      expect(back.toJson()['bewertung'], 5);
+      final wieder = rezeptAusRecipe(back);
+      expect(wieder.zutaten.map((z) => z.name), ['Hackfleisch', 'Dosentomaten']);
+      expect(wieder.portionen, 4);
+    });
+
+    test('Kaputte oder fremde Felder werden toleriert', () {
+      final r = Recipe.fromJson({'id': 'x', 'title': 7, 'servings': '3', 'ingredients': 'Mehl', 'steps': null});
+      expect(r.title, 'Rezept');
+      expect(r.servings, 3);
+      expect(r.ingredients, isEmpty);
+      expect(r.steps, isEmpty);
+      expect(r.imageBytes, isNull);
+    });
+
+    test('Vorschaubild wird verkleinert und als JPEG gespeichert', () {
+      final gross = img.Image(width: 1600, height: 900);
+      img.fill(gross, color: img.ColorRgb8(200, 80, 40));
+      final b64 = vorschaubild(Uint8List.fromList(img.encodePng(gross)));
+      final klein = img.decodeJpg(base64Decode(b64))!;
+      expect(klein.width, 640);
+      expect(klein.height, 360);
+      expect(vorschaubild(Uint8List.fromList([1, 2, 3])), '');
     });
   });
 }

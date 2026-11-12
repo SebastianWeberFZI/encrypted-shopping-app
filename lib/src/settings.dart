@@ -24,6 +24,10 @@ class LocalSettings {
   bool get notifyShopping => _p.getBool('notify_shopping') ?? true;
   set notifyShopping(bool v) => _p.setBool('notify_shopping', v);
 
+  /// Offene Artikel als angeheftete Benachrichtigung – auch auf dem Sperrbildschirm.
+  bool get lockList => _p.getBool('lock_list') ?? false;
+  set lockList(bool v) => _p.setBool('lock_list', v);
+
   bool get showSuggestions => _p.getBool('show_suggestions') ?? true;
   set showSuggestions(bool v) => _p.setBool('show_suggestions', v);
 

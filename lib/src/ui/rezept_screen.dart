@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../models/catalog.dart';
+import '../models/recipe.dart';
 import '../models/rezept.dart';
 import '../services/rezept_import.dart';
 import 'pikto.dart';
@@ -42,12 +43,31 @@ List<_Zeile> _zeilen(List<Zutat> zutaten) {
   return map.values.toList();
 }
 
-/// Rezept übernehmen: Zutaten eines geteilten Rezeptlinks (oder Textes) prüfen,
-/// Portionen anpassen und auf eine Liste setzen.
+/// Rezept übernehmen: Zutaten eines geteilten Rezeptlinks (oder Textes) bzw.
+/// eines gespeicherten Rezepts prüfen, Portionen anpassen und auf eine Liste
+/// setzen; geladene Rezepte auf Wunsch unter „Rezepte“ speichern.
 class RezeptScreen extends StatefulWidget {
-  const RezeptScreen({super.key, required this.state, required this.text});
+  const RezeptScreen({super.key, required this.state, required this.text})
+      : recipe = null,
+        portionen = null,
+        nurSpeichern = false;
+
+  /// Zutaten eines gespeicherten Rezepts auf die Liste setzen.
+  const RezeptScreen.gespeichert({super.key, required this.state, required Recipe this.recipe, this.portionen})
+      : text = '',
+        nurSpeichern = false;
+
+  /// Link einfügen und als Rezept speichern (ohne gleich einzukaufen).
+  const RezeptScreen.speichern({super.key, required this.state, required this.text})
+      : recipe = null,
+        portionen = null,
+        nurSpeichern = true;
+
   final AppState state;
   final String text;
+  final Recipe? recipe;
+  final int? portionen;
+  final bool nurSpeichern;
 
   @override
   State<RezeptScreen> createState() => _RezeptScreenState();
@@ -64,6 +84,14 @@ class _RezeptScreenState extends State<RezeptScreen> {
   late String _listId = state.currentList?.id ?? '';
   bool _speichert = false;
 
+  /// Unter „Rezepte“ speichern (nur bei Rezepten von Webseiten vorausgewählt).
+  bool _merken = false;
+  Recipe? get _schonGespeichert {
+    final q = _rezept?.quelle?.toString();
+    if (q == null) return null;
+    return state.repo.recipes.where((r) => r.sourceUrl == q).firstOrNull;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +99,12 @@ class _RezeptScreenState extends State<RezeptScreen> {
   }
 
   Future<void> _laden() async {
+    final gespeichert = widget.recipe;
+    if (gespeichert != null) {
+      _zeigen(rezeptAusRecipe(gespeichert));
+      if (widget.portionen != null) _portionen = widget.portionen;
+      return;
+    }
     final url = ersteAdresse(widget.text);
     _textZutaten = zutatenAusText(widget.text.replaceAll(RegExp(r'https?://\S+'), ''));
     if (url == null) {
@@ -94,12 +128,14 @@ class _RezeptScreenState extends State<RezeptScreen> {
       _fehler = null;
       _rezept = r;
       _portionen = r.portionen;
+      _merken = widget.recipe == null && (r.quelle != null || widget.nurSpeichern) && _schonGespeichert == null;
       _liste = _zeilen(r.zutaten);
       _an
         ..clear()
         ..addAll([
-          for (var i = 0; i < _liste.length; i++)
-            if (!_liste[i].vorrat && !_stehtDrauf(_liste[i])) i,
+          if (!widget.nurSpeichern)
+            for (var i = 0; i < _liste.length; i++)
+              if (!_liste[i].vorrat && !_stehtDrauf(_liste[i])) i,
         ]);
     });
   }
@@ -113,14 +149,31 @@ class _RezeptScreenState extends State<RezeptScreen> {
 
   Future<void> _hinzufuegen() async {
     final l = state.repo.list(_listId);
-    if (l == null || _speichert) return;
+    final r = _rezept;
+    if (r == null || _speichert) return;
     setState(() => _speichert = true);
-    final n = await state.addZutaten(_listId, [
-      for (final i in _an.toList()..sort()) (_liste[i].name, _liste[i].spec(_faktor)),
-    ]);
+    final meldungen = <String>[];
+    if (_merken) {
+      final bild = await ladeVorschaubild(r.bildUrl);
+      final neu = recipeAusRezept(r, bild: bild, von: state.me);
+      if (_an.isNotEmpty) neu.lastUsed = DateTime.now();
+      await state.saveRecipe(neu);
+      meldungen.add('unter „Rezepte“ gespeichert');
+    }
+    if (_an.isNotEmpty && l != null) {
+      final n = await state.addZutaten(_listId, [
+        for (final i in _an.toList()..sort()) (_liste[i].name, _liste[i].spec(_faktor)),
+      ]);
+      meldungen.insert(0, '$n ${n == 1 ? 'Zutat' : 'Zutaten'} auf „${l.name}“');
+      final gespeichert = widget.recipe;
+      if (gespeichert != null) {
+        gespeichert.lastUsed = DateTime.now();
+        await state.saveRecipe(gespeichert);
+      }
+    }
     if (!mounted) return;
     Navigator.pop(context);
-    state.toast.value = '$n ${n == 1 ? 'Zutat' : 'Zutaten'} aus „${_rezept!.titel}“ auf „${l.name}“';
+    state.toast.value = '„${r.titel}“: ${meldungen.join(', ')}';
   }
 
   @override
@@ -128,7 +181,12 @@ class _RezeptScreenState extends State<RezeptScreen> {
     final theme = Theme.of(context);
     final r = _rezept;
     return Scaffold(
-      appBar: AppBar(title: const Text('Rezept übernehmen')),
+      appBar: AppBar(
+          title: Text(widget.nurSpeichern
+              ? 'Rezept speichern'
+              : widget.recipe != null
+                  ? 'Zutaten auf die Liste'
+                  : 'Rezept übernehmen')),
       body: _fehler != null
           ? _fehlerAnsicht(theme)
           : r == null
@@ -194,6 +252,24 @@ class _RezeptScreenState extends State<RezeptScreen> {
                   ),
                   const Divider(),
                   for (var i = 0; i < _liste.length; i++) _zeile(theme, i),
+                  if (widget.recipe == null) ...[
+                    const Divider(),
+                    if (_schonGespeichert != null)
+                      const ListTile(
+                        leading: Icon(Icons.bookmark_added_outlined),
+                        title: Text('Schon unter „Rezepte“ gespeichert'),
+                      )
+                    else
+                      SwitchListTile(
+                        secondary: const Icon(Icons.bookmark_add_outlined),
+                        title: const Text('Unter „Rezepte“ speichern'),
+                        subtitle: Text(r.schritte.isNotEmpty
+                            ? 'Mit Zutaten, Zubereitung und Bild – für alle, die die Liste nutzen'
+                            : 'Zutaten und Titel – für alle, die die Liste nutzen'),
+                        value: _merken,
+                        onChanged: (v) => setState(() => _merken = v),
+                      ),
+                  ],
                 ]),
       bottomNavigationBar: r == null
           ? null
@@ -201,11 +277,13 @@ class _RezeptScreenState extends State<RezeptScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: FilledButton.icon(
-                  icon: const Icon(Icons.add_shopping_cart),
+                  icon: _speichert
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Icon(_an.isEmpty ? Icons.bookmark_add_outlined : Icons.add_shopping_cart),
                   label: Text(_an.isEmpty
-                      ? 'Nichts ausgewählt'
+                      ? (_merken ? 'Nur Rezept speichern' : 'Nichts ausgewählt')
                       : '${_an.length} ${_an.length == 1 ? 'Zutat' : 'Zutaten'} hinzufügen'),
-                  onPressed: _an.isEmpty || _speichert ? null : _hinzufuegen,
+                  onPressed: (_an.isEmpty && !_merken) || _speichert ? null : _hinzufuegen,
                 ),
               ),
             ),
