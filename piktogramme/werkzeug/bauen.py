@@ -91,7 +91,7 @@ def main():
         f.write(f"const List<String> kFluentPiktos = [\n{lst(fluent)}\n];\n\n")
         f.write("/// Selbst gezeichnete Symbole (piktogramme/eigene).\n")
         f.write(f"const List<String> kEigenePiktos = [\n{lst(eigene)}\n];\n\n")
-        f.write("/// Alle mitgelieferten Symbole (assets/piktos/<schlüssel>.png).\n")
+        f.write("/// Alle mitgelieferten Symbole (`assets/piktos/<schlüssel>.png`).\n")
         f.write("final Set<String> kPiktos = {...kFluentPiktos, ...kEigenePiktos};\n")
     size = sum(os.path.getsize(os.path.join(ASSETS, f)) for f in os.listdir(ASSETS))
     print(f"{len(fluent)} Fluent + {len(eigene)} eigene Symbole, {size / 1024:.0f} KB")

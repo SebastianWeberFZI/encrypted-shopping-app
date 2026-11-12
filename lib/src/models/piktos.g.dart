@@ -54,5 +54,5 @@ const List<String> kEigenePiktos = [
   'zucchini', 'zucker',
 ];
 
-/// Alle mitgelieferten Symbole (assets/piktos/<schlüssel>.png).
+/// Alle mitgelieferten Symbole (`assets/piktos/<schlüssel>.png`).
 final Set<String> kPiktos = {...kFluentPiktos, ...kEigenePiktos};
