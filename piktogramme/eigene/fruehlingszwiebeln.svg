@@ -1,0 +1,33 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="rotate(-14 10 29)">
+<path d="M8.2 3.5C8.2 2.5 11.8 2.5 11.8 3.5V18H8.2Z" fill="#00D26A"/>
+<rect x="9.55" y="4.5" width="0.9" height="12" rx="0.45" fill="#86D72F"/>
+<rect x="8.2" y="17" width="3.6" height="3.5" fill="#CFE8A8"/>
+<path d="M8.2 20H11.8C11.8 22 13.2 23.5 13.2 25.5C13.2 27.5 11.8 28.5 10 28.5C8.2 28.5 6.8 27.5 6.8 25.5C6.8 23.5 8.2 22 8.2 20Z" fill="#F3EEF8"/>
+<path d="M8.8 28.3L8.2 30.5M10 28.5V30.8M11.2 28.3L11.8 30.5" fill="#9B9B9B"/>
+<rect x="8.75" y="28.2" width="0.5" height="2.3" fill="#C9B497"/>
+<rect x="9.75" y="28.4" width="0.5" height="2.4" fill="#C9B497"/>
+<rect x="10.75" y="28.2" width="0.5" height="2.3" fill="#C9B497"/>
+</g>
+<g transform="rotate(14 22 29)">
+<path d="M20.2 3.5C20.2 2.5 23.8 2.5 23.8 3.5V18H20.2Z" fill="#00D26A"/>
+<rect x="21.55" y="4.5" width="0.9" height="12" rx="0.45" fill="#86D72F"/>
+<rect x="20.2" y="17" width="3.6" height="3.5" fill="#CFE8A8"/>
+<path d="M20.2 20H23.8C23.8 22 25.2 23.5 25.2 25.5C25.2 27.5 23.8 28.5 22 28.5C20.2 28.5 18.8 27.5 18.8 25.5C18.8 23.5 20.2 22 20.2 20Z" fill="#F3EEF8"/>
+<path d="M20.8 28.3L20.2 30.5M22 28.5V30.8M23.2 28.3L23.8 30.5" fill="#9B9B9B"/>
+<rect x="20.75" y="28.2" width="0.5" height="2.3" fill="#C9B497"/>
+<rect x="21.75" y="28.4" width="0.5" height="2.4" fill="#C9B497"/>
+<rect x="22.75" y="28.2" width="0.5" height="2.3" fill="#C9B497"/>
+</g>
+<g transform="rotate(0 16 29)">
+<path d="M14.2 3.5C14.2 2.5 17.8 2.5 17.8 3.5V18H14.2Z" fill="#00D26A"/>
+<rect x="15.55" y="4.5" width="0.9" height="12" rx="0.45" fill="#86D72F"/>
+<rect x="14.2" y="17" width="3.6" height="3.5" fill="#CFE8A8"/>
+<path d="M14.2 20H17.8C17.8 22 19.2 23.5 19.2 25.5C19.2 27.5 17.8 28.5 16 28.5C14.2 28.5 12.8 27.5 12.8 25.5C12.8 23.5 14.2 22 14.2 20Z" fill="#F3EEF8"/>
+<path d="M14.8 28.3L14.2 30.5M16 28.5V30.8M17.2 28.3L17.8 30.5" fill="#9B9B9B"/>
+<rect x="14.75" y="28.2" width="0.5" height="2.3" fill="#C9B497"/>
+<rect x="15.75" y="28.4" width="0.5" height="2.4" fill="#C9B497"/>
+<rect x="16.75" y="28.2" width="0.5" height="2.3" fill="#C9B497"/>
+</g>
+<rect x="10.5" y="20.5" width="11" height="2.6" rx="1" fill="#00A6ED"/>
+</svg>

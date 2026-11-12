@@ -10,12 +10,20 @@
         android:layout_height="36dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
+        <ImageView
+            android:id="@+id/shop_title_icon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="8dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
         <TextView
             android:id="@+id/shop_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:paddingStart="8dp"
+            android:paddingStart="6dp"
             android:textColor="#2F7D6B"
             android:textSize="15sp"
             android:textStyle="bold"

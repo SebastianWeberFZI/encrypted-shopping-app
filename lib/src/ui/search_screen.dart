@@ -34,18 +34,18 @@ class _SearchScreenState extends State<SearchScreen> {
         final l = state.currentList!;
         final color = Color(l.color);
         final (name, spec) = splitQuery(_q.text);
-        final results = <(String, String, String)>[]; // name, emoji, category
+        final results = <(String, String, String, String?)>[]; // Name, Emoji, Bereich, Symbol
         final seen = <String>{};
-        void addResult(String n, String e, String c) {
-          if (seen.add(normalizeName(n))) results.add((n, e, c));
+        void addResult(String n, String e, String c, [String? icon]) {
+          if (seen.add(normalizeName(n))) results.add((n, e, c, icon));
         }
 
         if (name.isNotEmpty) {
           for (final i in state.repo.items.where((i) => i.listId == l.id && normalizeName(i.name).contains(normalizeName(name)))) {
-            addResult(i.name, i.emoji, i.category);
+            addResult(i.name, i.emoji, i.category, i.icon);
           }
           for (final a in state.repo.customArticles.where((a) => normalizeName(a.name).contains(normalizeName(name)))) {
-            addResult(a.name, a.emoji, a.category);
+            addResult(a.name, a.emoji, a.category, a.icon);
           }
           for (final c in catalogSearch(name)) {
             addResult(c.name, c.emoji, c.category);
@@ -99,11 +99,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 columns: cols,
                 count: results.length,
                 builder: (c, i) {
-                  final (n, e, cat) = results[i];
+                  final (n, e, cat, icon) = results[i];
                   final existing = state.repo.itemByName(l.id, n);
                   final onList = existing?.needed ?? false;
                   return ItemTile(
                     emoji: e,
+                    icon: icon,
                     name: n,
                     spec: onList ? existing!.spec : spec,
                     style: TileStyle.catalog,
@@ -113,7 +114,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       if (onList) {
                         await state.removeFromList(existing!);
                       } else {
-                        await state.add(n, emoji: e, category: cat, spec: spec);
+                        await state.add(n, emoji: e, icon: icon, category: cat, spec: spec);
                         _q.clear();
                       }
                     },

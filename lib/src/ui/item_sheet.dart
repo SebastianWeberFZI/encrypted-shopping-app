@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../models/catalog.dart';
+import '../models/pikto.dart';
 import '../models/shopping_models.dart';
+import 'pikto.dart';
 
 const _quickSpecs = ['2×', '3×', '1 kg', '500 g', '1 l', 'Bio', 'laktosefrei', 'groß', 'klein', 'Angebot'];
 
@@ -33,16 +35,39 @@ class _ItemSheet extends StatefulWidget {
 
 class _ItemSheetState extends State<_ItemSheet> {
   late final _spec = TextEditingController(text: widget.item.spec);
-  late final _emoji = TextEditingController(text: widget.item.emoji);
+  late String? _icon = widget.item.icon;
   late String _category = widget.item.category;
 
   ShopItem get i => widget.item;
 
   Future<void> _save() async {
     i.spec = _spec.text.trim();
-    i.emoji = _emoji.text.trim().isEmpty ? i.emoji : _emoji.text.trim();
     i.category = _category;
+    if (_icon != i.icon) {
+      i.icon = _icon;
+      if (_icon != null) i.emoji = emojiForPikto(_icon!) ?? i.emoji;
+      // Eigener Artikel: das Symbol gilt auch im Katalog und auf anderen Listen.
+      final custom = widget.state.repo.customArticles
+          .where((a) => normalizeName(a.name) == normalizeName(i.name))
+          .firstOrNull;
+      if (custom != null) {
+        custom
+          ..icon = i.icon
+          ..emoji = i.emoji;
+        await widget.state.saveCustomArticle(custom);
+      }
+    }
     await widget.state.updateItem(i);
+  }
+
+  Future<void> _pickIcon() async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (c) => _PiktoPicker(selected: resolvePikto(icon: _icon, name: i.name, emoji: i.emoji)),
+    );
+    if (picked != null) setState(() => _icon = picked);
   }
 
   @override
@@ -59,16 +84,29 @@ class _ItemSheetState extends State<_ItemSheet> {
         padding: EdgeInsets.fromLTRB(20, 0, 20, 16 + MediaQuery.of(context).viewInsets.bottom),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            SizedBox(
-              width: 64,
-              child: TextField(
-                controller: _emoji,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 34),
-                decoration: const InputDecoration(border: InputBorder.none),
+            Tooltip(
+              message: 'Symbol ändern',
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: _pickIcon,
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Stack(clipBehavior: Clip.none, children: [
+                    Pikto(icon: _icon, name: i.name, emoji: i.emoji, size: 52),
+                    Positioned(
+                      right: -4,
+                      bottom: -4,
+                      child: CircleAvatar(
+                        radius: 10,
+                        backgroundColor: theme.colorScheme.secondaryContainer,
+                        child: Icon(Icons.edit, size: 12, color: theme.colorScheme.onSecondaryContainer),
+                      ),
+                    ),
+                  ]),
+                ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(child: Text(i.name, style: theme.textTheme.headlineSmall)),
           ]),
           for (final h in history)
@@ -99,7 +137,11 @@ class _ItemSheetState extends State<_ItemSheet> {
             initialValue: _category,
             decoration: const InputDecoration(labelText: 'Ladenbereich', border: OutlineInputBorder()),
             items: [
-              for (final c in kCategories) DropdownMenuItem(value: c.key, child: Text('${c.emoji}  ${c.name}')),
+              for (final c in kCategories)
+                DropdownMenuItem(
+                  value: c.key,
+                  child: Row(children: [Pikto(emoji: c.emoji, size: 22), const SizedBox(width: 10), Text(c.name)]),
+                ),
             ],
             onChanged: (v) => setState(() => _category = v ?? _category),
           ),
@@ -135,6 +177,49 @@ class _ItemSheetState extends State<_ItemSheet> {
           ]),
         ]),
       ),
+    );
+  }
+}
+
+/// Auswahl aus allen mitgelieferten Piktogrammen.
+class _PiktoPicker extends StatelessWidget {
+  const _PiktoPicker({required this.selected});
+  final String? selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final keys = piktoAuswahl();
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.7,
+      child: Column(children: [
+        Text('Symbol wählen', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 60, mainAxisSpacing: 6, crossAxisSpacing: 6),
+            itemCount: keys.length,
+            itemBuilder: (c, idx) {
+              final k = keys[idx];
+              final sel = k == selected;
+              return Material(
+                color: sel ? scheme.primaryContainer : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => Navigator.pop(context, k),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Pikto(icon: k, emoji: emojiOfKey(k) ?? '', size: 36),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ]),
     );
   }
 }

@@ -214,7 +214,7 @@ class ShoppingRepository {
 
   /// Setzt einen Artikel auf die Liste (legt ihn ggf. an).
   Future<ShopItem> addItem(String listId, String name,
-      {String? emoji, String? category, String spec = ''}) async {
+      {String? emoji, String? icon, String? category, String spec = ''}) async {
     final now = DateTime.now();
     final existing = itemByName(listId, name);
     if (existing != null) {
@@ -230,6 +230,7 @@ class ShoppingRepository {
       listId: listId,
       name: cat?.name ?? custom?.name ?? name.trim(),
       emoji: emoji ?? cat?.emoji ?? custom?.emoji ?? categoryByKey(category ?? guessCategory(name)).emoji,
+      icon: icon ?? custom?.icon,
       category: category ?? cat?.category ?? custom?.category ?? guessCategory(name),
       spec: spec,
       addedBy: userName(),

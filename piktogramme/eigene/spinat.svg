@@ -1,0 +1,17 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g transform="rotate(-30 16 29) translate(16 29) scale(0.92) translate(-16 -29)">
+<rect x="15.3" y="18" width="1.4" height="11" rx="0.7" fill="#86D72F"/>
+<path d="M16 3C10.5 6 8.3 11 9.3 15.5C10.2 19.3 13.3 21.5 16 21.5C18.7 21.5 21.8 19.3 22.7 15.5C23.7 11 21.5 6 16 3Z" fill="#008463"/>
+<rect x="15.4" y="5" width="1.2" height="16" rx="0.6" fill="#00D26A"/>
+</g>
+<g transform="rotate(30 16 29) translate(16 29) scale(0.92) translate(-16 -29)">
+<rect x="15.3" y="18" width="1.4" height="11" rx="0.7" fill="#86D72F"/>
+<path d="M16 3C10.5 6 8.3 11 9.3 15.5C10.2 19.3 13.3 21.5 16 21.5C18.7 21.5 21.8 19.3 22.7 15.5C23.7 11 21.5 6 16 3Z" fill="#008463"/>
+<rect x="15.4" y="5" width="1.2" height="16" rx="0.6" fill="#00D26A"/>
+</g>
+<g transform="rotate(0 16 29) translate(16 29) scale(0.92) translate(-16 -29)">
+<rect x="15.3" y="18" width="1.4" height="11" rx="0.7" fill="#86D72F"/>
+<path d="M16 3C10.5 6 8.3 11 9.3 15.5C10.2 19.3 13.3 21.5 16 21.5C18.7 21.5 21.8 19.3 22.7 15.5C23.7 11 21.5 6 16 3Z" fill="#00A65A"/>
+<rect x="15.4" y="5" width="1.2" height="16" rx="0.6" fill="#86D72F"/>
+</g>
+</svg>

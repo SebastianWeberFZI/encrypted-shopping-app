@@ -8,7 +8,10 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.LruCache
 import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
@@ -31,8 +34,31 @@ import org.json.JSONObject
  * selbst fragt nie periodisch ab (Energie).
  */
 
-data class ShopList(val id: String, val name: String, val emoji: String, val color: Int)
-data class ShopEntry(val id: String, val name: String, val emoji: String, val spec: String)
+data class ShopList(val id: String, val name: String, val emoji: String, val color: Int, val icon: String = "")
+data class ShopEntry(val id: String, val name: String, val emoji: String, val spec: String, val icon: String = "")
+
+/** Piktogramme aus den Flutter-Assets (assets/piktos/<schlüssel>.png), klein zwischengespeichert. */
+object Piktos {
+    private val cache = LruCache<String, Bitmap>(48)
+    private val valid = Regex("^[a-z0-9-]{1,40}$")
+
+    fun bitmap(context: Context, key: String, dp: Int): Bitmap? {
+        if (!valid.matches(key)) return null
+        val px = (dp * context.resources.displayMetrics.density).toInt().coerceIn(24, 128)
+        val ck = "$key@$px"
+        cache.get(ck)?.let { return it }
+        return try {
+            context.assets.open("flutter_assets/assets/piktos/$key.png").use { s ->
+                val b = BitmapFactory.decodeStream(s) ?: return null
+                val out = if (b.width != px) Bitmap.createScaledBitmap(b, px, px, true) else b
+                cache.put(ck, out)
+                out
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+}
 class ShopSnapshot(val lists: List<ShopList>, val items: Map<String, List<ShopEntry>>, val defaultList: String)
 
 object ShopData {
@@ -54,7 +80,7 @@ object ShopData {
                     val o = arr.optJSONObject(i) ?: continue
                     val id = o.optString("id")
                     if (id.isNotEmpty()) lists.add(ShopList(id, o.optString("n", "Liste"), o.optString("e", "🛒"),
-                        o.optLong("c", DEFAULT_COLOR).toInt()))
+                        o.optLong("c", DEFAULT_COLOR).toInt(), o.optString("i")))
                 }
             }
             val items = HashMap<String, List<ShopEntry>>()
@@ -64,7 +90,7 @@ object ShopData {
                     items[listId] = (0 until arr.length()).mapNotNull { i ->
                         val o = arr.optJSONObject(i) ?: return@mapNotNull null
                         val id = o.optString("id")
-                        if (id.isEmpty()) null else ShopEntry(id, o.optString("n"), o.optString("e", "🛍️"), o.optString("s"))
+                        if (id.isEmpty()) null else ShopEntry(id, o.optString("n"), o.optString("e", "🛍️"), o.optString("s"), o.optString("i"))
                     }
                 }
             }
@@ -150,7 +176,18 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.widget_shopping)
         val list = ShopData.listFor(context, snap, id)
         val count = list?.let { snap.items[it.id]?.size } ?: 0
-        views.setTextViewText(R.id.shop_title, if (list == null) "Einkaufsliste" else "${list.emoji} ${list.name}")
+        val titleIcon = list?.let { Piktos.bitmap(context, it.icon, 22) }
+        if (titleIcon != null) {
+            views.setImageViewBitmap(R.id.shop_title_icon, titleIcon)
+            views.setViewVisibility(R.id.shop_title_icon, android.view.View.VISIBLE)
+        } else {
+            views.setViewVisibility(R.id.shop_title_icon, android.view.View.GONE)
+        }
+        views.setTextViewText(R.id.shop_title, when {
+            list == null -> "Einkaufsliste"
+            titleIcon != null -> list.name
+            else -> "${list.emoji} ${list.name}"
+        })
         views.setTextViewText(R.id.shop_count, if (count > 0) "$count" else "")
         list?.let { views.setInt(R.id.shop_title, "setTextColor", it.color) }
         val svc = Intent(context, ShoppingWidgetService::class.java).apply {
@@ -205,7 +242,16 @@ private class ShoppingFactory(private val context: Context, private val widgetId
         val e = entries.getOrNull(position) ?: return RemoteViews(context.packageName, R.layout.widget_shopping_item)
         return RemoteViews(context.packageName, R.layout.widget_shopping_item).apply {
             setInt(R.id.tile_bg, "setColorFilter", color)
-            setTextViewText(R.id.tile_emoji, e.emoji)
+            val icon = Piktos.bitmap(context, e.icon, 30)
+            if (icon != null) {
+                setImageViewBitmap(R.id.tile_icon, icon)
+                setViewVisibility(R.id.tile_icon, android.view.View.VISIBLE)
+                setViewVisibility(R.id.tile_emoji, android.view.View.GONE)
+            } else {
+                setTextViewText(R.id.tile_emoji, e.emoji)
+                setViewVisibility(R.id.tile_icon, android.view.View.GONE)
+                setViewVisibility(R.id.tile_emoji, android.view.View.VISIBLE)
+            }
             setTextViewText(R.id.tile_name, e.name)
             setTextViewText(R.id.tile_spec, e.spec)
             setViewVisibility(R.id.tile_spec, if (e.spec.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE)
