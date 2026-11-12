@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../app_state.dart';
+import '../services/widget_service.dart';
 import '../background/background_worker.dart';
 import '../core/werkstatt.dart';
 import '../werkstatt/demo_data.dart';
@@ -147,6 +148,21 @@ class SettingsScreen extends StatelessWidget {
                   if (context.mounted) Navigator.pop(context);
                 }
               },
+            ),
+            FutureBuilder<bool>(
+              future: ShoppingWidget.canPin(),
+              builder: (c, snap) => snap.data == true
+                  ? Column(children: [
+                      header('Widget'),
+                      ListTile(
+                        leading: const Icon(Icons.widgets_outlined),
+                        title: const Text('Einkaufslisten-Widget hinzufügen'),
+                        subtitle: const Text('Artikel auf dem Startbildschirm abhaken – ohne die App zu öffnen. '
+                            'Welche Liste es zeigt, stellst du am Zahnrad im Widget ein.'),
+                        onTap: ShoppingWidget.pin,
+                      ),
+                    ])
+                  : const SizedBox.shrink(),
             ),
             header('Info'),
             FutureBuilder(

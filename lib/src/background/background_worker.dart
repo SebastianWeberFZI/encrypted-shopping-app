@@ -8,6 +8,7 @@ import 'package:workmanager/workmanager.dart';
 import '../core/source_config.dart';
 import '../core/werkstatt.dart';
 import '../services/notification_service.dart';
+import '../services/widget_service.dart';
 import '../settings.dart';
 import '../shopping_repository.dart';
 
@@ -45,6 +46,7 @@ Future<void> runBackgroundCycle({bool force = false}) async {
     return;
   }
   final r = await repo.sync();
+  if (r != null && r.pulled > 0) await ShoppingWidget.update(repo, settings);
   if (r == null) {
     _log('Sync ohne Ergebnis (gesperrt oder Fehler: ${repo.error})');
     return;
@@ -64,6 +66,10 @@ Future<void> registerBackgroundWork() async {
     kPeriodicTask,
     kPeriodicTask,
     frequency: const Duration(minutes: 15),
+    // Energie sparen: nur mit Netz (ohne Netz gibt es nichts abzugleichen).
+    // „update“ übernimmt geänderte Bedingungen auch für bereits registrierte Aufgaben.
+    constraints: Constraints(networkType: NetworkType.connected),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
   );
 }
 

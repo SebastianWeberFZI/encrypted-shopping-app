@@ -26,6 +26,7 @@ Beim ersten Start fragt die App nach dem privaten Daten-Repo, einem Fine-grained
 - Suche mit Synonymen, Details per Zahl („Milch 2 l“), eigene Artikel
 - Vorschläge aus dem Kaufverlauf (übliches Intervall abgelaufen)
 - Benachrichtigungen, wenn die andere Person etwas hinzufügt, einkauft oder „Ich gehe einkaufen“ meldet
+- Startbildschirm-**Widget**: zeigt die offenen Artikel einer Liste (je Widget wählbar), antippen hakt ab – ohne die App zu öffnen
 - Offline-First; deterministische Artikel-IDs (HMAC) verhindern Dubletten bei gleichzeitigem Hinzufügen
 
 ## Daten-Repo
@@ -36,3 +37,11 @@ items/<hmac>.enc    Artikel je Liste (Status, Details, Verlauf)
 catalog/<id>.enc    eigene Artikel
 activity/<id>.enc   „Ich gehe einkaufen“-Signale (7 Tage)
 ```
+
+## Kompatibilität zwischen App-Versionen
+Beide Handys müssen nicht gleichzeitig aktualisiert werden:
+- Ältere und neuere Dokumente werden tolerant gelesen – fehlende Felder bekommen Standardwerte, falsche Typen oder unbekannte Werte bringen die App nicht zum Absturz.
+- Felder, die eine App-Version nicht kennt, bleiben beim Speichern unverändert erhalten (eine ältere App beschneidet die Daten einer neueren nicht).
+- Dokumente in einem neueren Verschlüsselungsformat werden weder gelesen noch überschrieben; die App bittet dann um ein Update.
+- Erhöht eine neuere App die Datenformat-Generation (`schema` in `meta.json`), pausieren ältere Apps den Abgleich, behalten ihre lokalen Änderungen und bitten um ein Update.
+- Unlesbare oder beschädigte Dateien werden übersprungen und nicht bei jedem Abgleich neu geladen.

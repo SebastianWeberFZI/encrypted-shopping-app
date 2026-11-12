@@ -1,11 +1,19 @@
 import 'package:uuid/uuid.dart';
 
 import 'catalog.dart';
+import 'json_util.dart';
 
+/// Version des Dokumentformats, mit der diese App schreibt. Jedes Dokument
+/// trägt die Version der App, die es zuletzt gespeichert hat. Unbekannte
+/// Felder neuerer Versionen bleiben über `extra` erhalten.
 const int kSchemaVersion = 1;
 String newId() => const Uuid().v4();
 
-DateTime? _dt(Object? v) => v is String ? DateTime.tryParse(v) : null;
+String _id(Map<String, dynamic> j, String? path, String what) {
+  final id = idFromPath(path) ?? jStrOrNull(j['id']);
+  if (id == null || id.isEmpty) throw FormatException('$what ohne ID');
+  return id;
+}
 
 /// Eine Einkaufsliste (z. B. Supermarkt, Drogerie).
 class ShoppingList {
@@ -18,11 +26,16 @@ class ShoppingList {
     List<String>? categoryOrder,
     DateTime? updatedAt,
     this.updatedBy = '',
+    Map<String, dynamic>? extra,
   })  : id = id ?? newId(),
         categoryOrder = categoryOrder ?? [],
-        updatedAt = updatedAt ?? DateTime.now();
+        updatedAt = updatedAt ?? DateTime.now(),
+        extra = extra ?? {};
 
   final String id;
+
+  /// Unbekannte Felder (neuere App-Version), bleiben beim Speichern erhalten.
+  final Map<String, dynamic> extra;
   String name;
   String emoji;
   int color;
@@ -44,6 +57,7 @@ class ShoppingList {
   }
 
   Map<String, dynamic> toJson() => {
+        ...extra,
         'id': id,
         'name': name,
         'emoji': emoji,
@@ -55,19 +69,32 @@ class ShoppingList {
         'schema_version': kSchemaVersion,
       };
 
-  factory ShoppingList.fromJson(Map<String, dynamic> j) => ShoppingList(
-        id: j['id'] as String,
-        name: j['name'] as String? ?? 'Liste',
-        emoji: j['emoji'] as String? ?? '🛒',
-        color: (j['color'] as num?)?.toInt() ?? 0xFF2F7D6B,
-        sortOrder: (j['sort_order'] as num?)?.toInt() ?? 0,
-        categoryOrder: (j['category_order'] as List? ?? []).cast<String>(),
-        updatedAt: _dt(j['updated_at']),
-        updatedBy: j['updated_by'] as String? ?? '',
+  static const _known = {
+    'id', 'name', 'emoji', 'color', 'sort_order', 'category_order',
+    'updated_at', 'updated_by', 'schema_version',
+  };
+
+  factory ShoppingList.fromJson(Map<String, dynamic> j, {String? path}) =>
+      ShoppingList(
+        id: _id(j, path, 'Liste'),
+        name: jStr(j['name'], 'Liste'),
+        emoji: jStr(j['emoji'], '🛒'),
+        color: jInt(j['color'], 0xFF2F7D6B),
+        sortOrder: jInt(j['sort_order'], 0),
+        categoryOrder: jStrings(j['category_order']),
+        updatedAt: jDate(j['updated_at']),
+        updatedBy: jStr(j['updated_by']),
+        extra: unknownFields(j, _known),
       );
 }
 
-enum ItemStatus { needed, recent }
+enum ItemStatus {
+  needed,
+  recent;
+
+  static ItemStatus? tryName(Object? v) =>
+      ItemStatus.values.where((s) => s.name == v).firstOrNull;
+}
 
 /// Ein Artikel auf einer Liste. Die ID ist deterministisch
 /// (HMAC über Liste + Name), damit gleichzeitiges Hinzufügen desselben
@@ -89,11 +116,22 @@ class ShopItem {
     List<DateTime>? purchaseHistory,
     DateTime? updatedAt,
     this.updatedBy = '',
+    Map<String, dynamic>? extra,
+    this.unknownStatus,
   })  : addedAt = addedAt ?? DateTime.now(),
         purchaseHistory = purchaseHistory ?? [],
-        updatedAt = updatedAt ?? DateTime.now();
+        updatedAt = updatedAt ?? DateTime.now(),
+        extra = extra ?? {};
 
   final String id;
+
+  /// Unbekannte Felder (neuere App-Version), bleiben beim Speichern erhalten.
+  final Map<String, dynamic> extra;
+
+  /// Status einer neueren App-Version. Der Artikel erscheint dann als "zu
+  /// kaufen" (lieber sichtbar als verschwunden); der Status bleibt erhalten,
+  /// bis jemand den Artikel hier abhakt oder neu hinzufügt.
+  String? unknownStatus;
   final String listId;
   String name;
   String emoji;
@@ -137,6 +175,7 @@ class ShopItem {
   /// Als gekauft markieren (wandert zu "Zuletzt verwendet").
   void markBought(String by, DateTime now) {
     status = ItemStatus.recent;
+    unknownStatus = null;
     doneBy = by;
     doneAt = now;
     purchaseCount++;
@@ -149,18 +188,20 @@ class ShopItem {
   /// Wieder auf die Liste setzen.
   void markNeeded(String by, DateTime now) {
     status = ItemStatus.needed;
+    unknownStatus = null;
     addedBy = by;
     addedAt = now;
   }
 
   Map<String, dynamic> toJson() => {
+        ...extra,
         'id': id,
         'list_id': listId,
         'name': name,
         'emoji': emoji,
         'category': category,
         if (spec.isNotEmpty) 'spec': spec,
-        'status': status.name,
+        'status': unknownStatus ?? status.name,
         'added_by': addedBy,
         'added_at': addedAt.toIso8601String(),
         if (doneBy.isNotEmpty) 'done_by': doneBy,
@@ -173,27 +214,35 @@ class ShopItem {
         'schema_version': kSchemaVersion,
       };
 
-  factory ShopItem.fromJson(Map<String, dynamic> j) => ShopItem(
-        id: j['id'] as String,
-        listId: j['list_id'] as String? ?? '',
-        name: j['name'] as String? ?? '',
-        emoji: j['emoji'] as String? ?? '🛍️',
-        category: j['category'] as String? ?? 'sonstiges',
-        spec: j['spec'] as String? ?? '',
-        status:
-            j['status'] == 'recent' ? ItemStatus.recent : ItemStatus.needed,
-        addedBy: j['added_by'] as String? ?? '',
-        addedAt: _dt(j['added_at']),
-        doneBy: j['done_by'] as String? ?? '',
-        doneAt: _dt(j['done_at']),
-        purchaseCount: (j['purchase_count'] as num?)?.toInt() ?? 0,
-        purchaseHistory: (j['purchase_history'] as List? ?? [])
-            .map((e) => DateTime.tryParse(e as String))
-            .whereType<DateTime>()
-            .toList(),
-        updatedAt: _dt(j['updated_at']),
-        updatedBy: j['updated_by'] as String? ?? '',
-      );
+  static const _known = {
+    'id', 'list_id', 'name', 'emoji', 'category', 'spec', 'status',
+    'added_by', 'added_at', 'done_by', 'done_at', 'purchase_count',
+    'purchase_history', 'updated_at', 'updated_by', 'schema_version',
+  };
+
+  factory ShopItem.fromJson(Map<String, dynamic> j, {String? path}) {
+    final rawStatus = j['status'];
+    final status = ItemStatus.tryName(rawStatus);
+    return ShopItem(
+      id: _id(j, path, 'Artikel'),
+      listId: jStr(j['list_id']),
+      name: jStr(j['name']),
+      emoji: jStr(j['emoji'], '🛍️'),
+      category: jStr(j['category'], 'sonstiges'),
+      spec: jStr(j['spec']),
+      status: status ?? ItemStatus.needed,
+      unknownStatus: status == null && rawStatus is String ? rawStatus : null,
+      addedBy: jStr(j['added_by']),
+      addedAt: jDate(j['added_at']),
+      doneBy: jStr(j['done_by']),
+      doneAt: jDate(j['done_at']),
+      purchaseCount: jInt(j['purchase_count'], 0),
+      purchaseHistory: jDates(j['purchase_history']),
+      updatedAt: jDate(j['updated_at']),
+      updatedBy: jStr(j['updated_by']),
+      extra: unknownFields(j, _known),
+    );
+  }
 }
 
 /// Eigener Katalogartikel (gilt für alle Listen).
@@ -205,10 +254,13 @@ class CustomArticle {
     this.category = 'sonstiges',
     DateTime? updatedAt,
     this.updatedBy = '',
+    Map<String, dynamic>? extra,
   })  : id = id ?? newId(),
-        updatedAt = updatedAt ?? DateTime.now();
+        updatedAt = updatedAt ?? DateTime.now(),
+        extra = extra ?? {};
 
   final String id;
+  final Map<String, dynamic> extra;
   String name;
   String emoji;
   String category;
@@ -218,6 +270,7 @@ class CustomArticle {
   String get path => 'catalog/$id.enc';
 
   Map<String, dynamic> toJson() => {
+        ...extra,
         'id': id,
         'name': name,
         'emoji': emoji,
@@ -227,13 +280,20 @@ class CustomArticle {
         'schema_version': kSchemaVersion,
       };
 
-  factory CustomArticle.fromJson(Map<String, dynamic> j) => CustomArticle(
-        id: j['id'] as String,
-        name: j['name'] as String? ?? '',
-        emoji: j['emoji'] as String? ?? '🛍️',
-        category: j['category'] as String? ?? 'sonstiges',
-        updatedAt: _dt(j['updated_at']),
-        updatedBy: j['updated_by'] as String? ?? '',
+  static const _known = {
+    'id', 'name', 'emoji', 'category', 'updated_at', 'updated_by',
+    'schema_version',
+  };
+
+  factory CustomArticle.fromJson(Map<String, dynamic> j, {String? path}) =>
+      CustomArticle(
+        id: _id(j, path, 'Katalogartikel'),
+        name: jStr(j['name']),
+        emoji: jStr(j['emoji'], '🛍️'),
+        category: jStr(j['category'], 'sonstiges'),
+        updatedAt: jDate(j['updated_at']),
+        updatedBy: jStr(j['updated_by']),
+        extra: unknownFields(j, _known),
       );
 }
 
@@ -245,8 +305,12 @@ class Activity {
     required this.listId,
     required this.by,
     DateTime? at,
+    Map<String, dynamic>? extra,
   })  : id = id ?? newId(),
-        at = at ?? DateTime.now();
+        at = at ?? DateTime.now(),
+        extra = extra ?? {};
+
+  final Map<String, dynamic> extra;
 
   static const goingShopping = 'going_shopping';
   static const doneShopping = 'done_shopping';
@@ -260,6 +324,7 @@ class Activity {
   String get path => 'activity/$id.enc';
 
   Map<String, dynamic> toJson() => {
+        ...extra,
         'id': id,
         'type': type,
         'list_id': listId,
@@ -269,11 +334,20 @@ class Activity {
         'updated_by': by,
       };
 
-  factory Activity.fromJson(Map<String, dynamic> j) => Activity(
-        id: j['id'] as String,
-        type: j['type'] as String? ?? '',
-        listId: j['list_id'] as String? ?? '',
-        by: j['by'] as String? ?? '',
-        at: _dt(j['at']),
+  static const _known = {
+    'id', 'type', 'list_id', 'by', 'at', 'updated_at', 'updated_by',
+  };
+
+  factory Activity.fromJson(Map<String, dynamic> j, {String? path}) =>
+      Activity(
+        id: _id(j, path, 'Signal'),
+        type: jStr(j['type']),
+        listId: jStr(j['list_id']),
+        by: jStr(j['by']),
+        // Ohne Zeitpunkt gilt das Signal als alt (keine Benachrichtigung).
+        at: jDate(j['at']) ??
+            jDate(j['updated_at']) ??
+            DateTime.fromMillisecondsSinceEpoch(0),
+        extra: unknownFields(j, _known),
       );
 }

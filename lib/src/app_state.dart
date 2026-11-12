@@ -6,6 +6,7 @@ import 'core/github_api.dart';
 import 'core/werkstatt.dart';
 import 'models/shopping_models.dart';
 import 'services/notification_service.dart';
+import 'services/widget_service.dart';
 import 'settings.dart';
 import 'shopping_repository.dart';
 
@@ -21,6 +22,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool syncing = false;
   Timer? _syncDebounce;
   Timer? _poll;
+  Timer? _widgetDebounce;
 
   /// Hinweise für die UI (Snackbar), z. B. fremde Änderungen im Vordergrund.
   final ValueNotifier<String?> toast = ValueNotifier(null);
@@ -39,6 +41,14 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   void selectList(ShoppingList l) {
     settings.currentListId = l.id;
     notifyListeners();
+    _scheduleWidget();
+  }
+
+  /// Startbildschirm-Widget gesammelt aktualisieren (nicht bei jedem Tippen).
+  void _scheduleWidget() {
+    _widgetDebounce?.cancel();
+    _widgetDebounce = Timer(const Duration(milliseconds: 700),
+        () => ShoppingWidget.update(repo, settings));
   }
 
   // ------------------------------------------------------------ Start
@@ -47,7 +57,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     await repo.open();
     await notifications.init();
+    await ShoppingWidget.register();
     initialized = true;
+    _scheduleWidget();
     notifyListeners();
     _startPolling();
     if (repo.isOpen) unawaited(syncNow(silent: true));
@@ -150,6 +162,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void _changed() {
     notifyListeners();
+    _scheduleWidget();
     _syncDebounce?.cancel();
     _syncDebounce = Timer(const Duration(milliseconds: 1500), () => syncNow(silent: true));
   }
@@ -174,8 +187,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           toast.value = texts.join('\n');
         }
         if (r.pulled > 0) await repo.cleanupActivities();
+        if (r.pulled > 0) _scheduleWidget();
       }
-      if (!silent && repo.error == null) toast.value ??= 'Alles aktuell';
+      if (!silent) toast.value ??= repo.error ?? repo.notice ?? 'Alles aktuell';
     } finally {
       syncing = false;
       notifyListeners();

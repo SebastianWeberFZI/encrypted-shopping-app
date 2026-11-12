@@ -31,6 +31,9 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.LAUNCH"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -49,6 +52,29 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
+        <!-- Startbildschirm-Widget: Einkaufsliste mit Abhaken -->
+        <receiver android:name=".ShoppingWidgetProvider" android:exported="false"
+            android:label="@string/widget_shopping_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/shopping_widget_info"/>
+        </receiver>
+        <service android:name=".ShoppingWidgetService" android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS"/>
+        <receiver android:name=".ShoppingCheckReceiver" android:exported="false"/>
+        <receiver android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.BACKGROUND"/>
+            </intent-filter>
+        </receiver>
+        <activity android:name=".ShoppingWidgetConfigActivity" android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.Dialog"
+            android:excludeFromRecents="true" android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+            </intent-filter>
+        </activity>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 
 import '../app_state.dart';
 import '../models/catalog.dart';
@@ -19,18 +23,34 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final Set<String> _openCategories = {};
+  StreamSubscription<Uri?>? _widgetClicks;
   AppState get state => widget.state;
 
   @override
   void initState() {
     super.initState();
     state.toast.addListener(_toast);
+    if (Platform.isAndroid) {
+      HomeWidget.initiallyLaunchedFromHomeWidget().then(_handleWidgetUri).catchError((_) {});
+      _widgetClicks = HomeWidget.widgetClicked.listen(_handleWidgetUri, onError: (_) {});
+    }
   }
 
   @override
   void dispose() {
     state.toast.removeListener(_toast);
+    _widgetClicks?.cancel();
     super.dispose();
+  }
+
+  /// Aus dem Widget: einkauf://list?list=… (Liste zeigen), einkauf://add?list=… (Artikel suchen).
+  void _handleWidgetUri(Uri? uri) {
+    if (uri == null || !mounted) return;
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    final id = uri.queryParameters['list'];
+    final l = id == null ? null : state.repo.list(id);
+    if (l != null) state.selectList(l);
+    if (uri.host == 'add') _openSearch(context);
   }
 
   void _toast() {
@@ -396,13 +416,17 @@ class _SyncIcon extends StatelessWidget {
     }
     final pending = state.repo.pendingCount;
     final err = state.repo.error;
+    final notice = state.repo.notice;
+    final needsUpdate = (err ?? notice ?? '').contains('neueren App-Version');
     return IconButton(
-      tooltip: err ?? (pending > 0 ? '$pending Änderung(en) ausstehend' : 'Synchronisiert'),
+      tooltip: err ?? notice ?? (pending > 0 ? '$pending Änderung(en) ausstehend' : 'Synchronisiert'),
       onPressed: () => state.syncNow(),
       icon: Badge(
         isLabelVisible: pending > 0,
         label: Text('$pending'),
-        child: Icon(err != null
+        child: Icon(needsUpdate
+            ? Icons.system_update_alt
+            : err != null
             ? Icons.cloud_off_outlined
             : pending > 0
                 ? Icons.cloud_upload_outlined
