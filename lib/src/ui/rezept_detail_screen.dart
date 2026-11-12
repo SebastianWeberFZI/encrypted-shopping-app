@@ -5,7 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app_state.dart';
 import '../models/recipe.dart';
 import '../models/rezept.dart';
+import 'foto_auswahl.dart';
 import 'rezept_editor.dart';
+import 'rezept_fotos.dart';
 import 'rezept_screen.dart';
 
 /// Ein gespeichertes Rezept: Zutaten (mit Portionen umgerechnet), Zubereitung,
@@ -48,6 +50,24 @@ class _RezeptDetailScreenState extends State<RezeptDetailScreen> {
   double get _faktor {
     final s = r.servings;
     return (s == null || _portionen == null) ? 1 : _portionen! / s;
+  }
+
+  /// Fotos direkt anhängen (z. B. das fertige Gericht); das erste wird
+  /// Titelbild, wenn es noch keines gibt.
+  Future<void> _fotoHinzufuegen() async {
+    final neu = await fotosWaehlen(context);
+    final store = widget.state.repo.photos;
+    if (neu.isEmpty || store == null) return;
+    final rezept = r;
+    for (final f in neu) {
+      final id = await store.add(f.jpeg);
+      rezept.photos = [...rezept.photos, RecipePhoto(id: id, width: f.breite, height: f.hoehe)];
+      if (rezept.imageJpeg.isEmpty) {
+        rezept.imageJpeg = f.vorschau;
+        rezept.coverPhoto = id;
+      }
+    }
+    await widget.state.saveRecipe(rezept);
   }
 
   Future<void> _loeschen() async {
@@ -125,10 +145,12 @@ class _RezeptDetailScreenState extends State<RezeptDetailScreen> {
                   ),
                   PopupMenuButton<String>(
                     onSelected: (v) {
+                      if (v == 'foto') _fotoHinzufuegen();
                       if (v == 'quelle') launchUrl(Uri.parse(rezept.sourceUrl), mode: LaunchMode.externalApplication);
                       if (v == 'loeschen') _loeschen();
                     },
                     itemBuilder: (c) => [
+                      const PopupMenuItem(value: 'foto', child: Text('Foto hinzufügen')),
                       if (rezept.sourceUrl.isNotEmpty)
                         PopupMenuItem(value: 'quelle', child: Text('Original auf ${rezept.sourceHost} öffnen')),
                       const PopupMenuItem(value: 'loeschen', child: Text('Rezept löschen')),
@@ -197,6 +219,16 @@ class _RezeptDetailScreenState extends State<RezeptDetailScreen> {
                       ],
                     ),
                   ),
+                  if (rezept.photos.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    FotoLeiste(
+                      repo: widget.state.repo,
+                      photos: rezept.photos,
+                      // Nur Fotos (z. B. die Kochbuchseite): größer zeigen
+                      hoehe: rezept.ingredients.isEmpty && rezept.steps.isEmpty ? 300 : 180,
+                    ),
+                  ],
+                  if (rezept.ingredients.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 12, 0),
                     child: Row(
@@ -249,6 +281,7 @@ class _RezeptDetailScreenState extends State<RezeptDetailScreen> {
                       ),
                     ),
                   ),
+                  ],
                   if (rezept.steps.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),

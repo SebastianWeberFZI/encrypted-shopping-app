@@ -26,7 +26,7 @@ Beim ersten Start fragt die App nach dem privaten Daten-Repo, einem Fine-grained
 - Einheitliche **Piktogramme** auf allen Handys und im Widget: [Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (Microsoft, MIT) im Stil *Flat*, ergänzt um eigene Symbole im selben Stil (`piktogramme/`); Symbol je Artikel änderbar (lange drücken)
 - Suche mit Synonymen, Details per Zahl („Milch 2 l“), eigene Artikel
 - **Rezepte übernehmen** über *Teilen*: Rezeptlink aus Chefkoch, Lecker, Kitchen Stories, EAT SMARTER u. a. (alle Seiten mit schema.org-Rezeptdaten) oder eine Zutatenliste als Text → Zutaten prüfen, Portionen anpassen, auf eine Liste setzen
-- **Rezepte-Reiter**: Rezepte samt Zutaten, Zubereitung, Bild (verkleinert), Portionen, Zeiten, Kategorie, Kalorien und Quelle speichern – beim Teilen, per eingefügtem Link oder als eigenes Rezept (Kochbuch, Familienrezept). Portionen umrechnen, Zutaten mit einem Tipp wieder auf die Liste, bearbeiten, löschen; beide sehen dieselben Rezepte
+- **Rezepte-Reiter**: Rezepte samt Zutaten, Zubereitung, Bild (verkleinert), Portionen, Zeiten, Kategorie, Kalorien und Quelle speichern – beim Teilen, per eingefügtem Link oder als eigenes Rezept (Kochbuch, Familienrezept). **Fotos** anhängen – z. B. die Kochbuchseite statt abzutippen, oder das fertige Gericht als Titelbild; im Vollbild lesbar (zoomen, doppelt tippen). Portionen umrechnen, Zutaten mit einem Tipp wieder auf die Liste, bearbeiten, löschen; beide sehen dieselben Rezepte
 - Vorschläge aus dem Kaufverlauf (übliches Intervall abgelaufen)
 - Benachrichtigungen, wenn die andere Person etwas hinzufügt, einkauft oder „Ich gehe einkaufen“ meldet
 - Startbildschirm-**Widget**: zeigt die offenen Artikel einer Liste (je Widget wählbar), antippen hakt ab – ohne die App zu öffnen; auf Geräten, die Sperrbildschirm-Widgets können, auch dort
@@ -41,6 +41,7 @@ items/<hmac>.enc    Artikel je Liste (Status, Details, Verlauf)
 catalog/<id>.enc    eigene Artikel
 activity/<id>.enc   „Ich gehe einkaufen“-Signale (7 Tage)
 recipes/<id>.enc    gespeicherte Rezepte (inkl. Vorschaubild als JPEG, ≤ 640 px)
+photos/<id>.enc     Rezeptfotos (JPEG ≤ 1800 px, ohne Metadaten; erst beim Anzeigen geladen)
 ```
 
 ## Kompatibilität zwischen App-Versionen

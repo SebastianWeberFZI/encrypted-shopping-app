@@ -97,6 +97,10 @@ class SyncEngine {
   final ConflictHandler? onConflict;
   final String commitMessage;
 
+  /// Stand des Repos beim letzten Abgleich (für Dateien außerhalb der
+  /// verwalteten Verzeichnisse, z. B. Fotos).
+  RepoTree? lastTree;
+
   bool _managed(String path) =>
       path.endsWith('.enc') &&
       managedDirs.any((d) => path.startsWith('$d/'));
@@ -245,6 +249,7 @@ class SyncEngine {
 
   Future<void> _pull(SyncResult result) async {
     final tree = await api.getTree();
+    lastTree = tree;
     await _checkMeta(tree.files[kMetaPath]);
     final remote = {
       for (final e in tree.files.entries)

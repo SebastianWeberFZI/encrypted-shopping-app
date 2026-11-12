@@ -4,6 +4,36 @@ import 'dart:typed_data';
 import 'json_util.dart';
 import 'shopping_models.dart' show kSchemaVersion, newId;
 
+/// Foto zu einem Rezept (z. B. die Kochbuchseite). Die Bilddaten liegen
+/// getrennt unter `photos/<id>.enc` und werden erst beim Anzeigen geladen.
+class RecipePhoto {
+  RecipePhoto({required this.id, this.width, this.height, Map<String, dynamic>? extra}) : extra = extra ?? {};
+
+  final String id;
+  final int? width;
+  final int? height;
+  final Map<String, dynamic> extra;
+
+  /// Seitenverhältnis (Breite/Höhe), falls bekannt.
+  double? get aspect => width != null && height != null && width! > 0 && height! > 0 ? width! / height! : null;
+
+  Map<String, dynamic> toJson() => {...extra, 'id': id, 'w': ?width, 'h': ?height};
+
+  static RecipePhoto? tryParse(Object? v) {
+    if (v is String && v.isNotEmpty) return RecipePhoto(id: v);
+    if (v is! Map) return null;
+    final m = v.cast<String, dynamic>();
+    final id = jStrOrNull(m['id']);
+    if (id == null || id.isEmpty || id.contains('/')) return null;
+    return RecipePhoto(
+      id: id,
+      width: jIntOrNull(m['w']),
+      height: jIntOrNull(m['h']),
+      extra: unknownFields(m, const {'id', 'w', 'h'}),
+    );
+  }
+}
+
 /// Ein gespeichertes Rezept (Datei `recipes/<id>.enc`, für beide sichtbar).
 ///
 /// Zutaten und Schritte werden so gespeichert, wie sie im Rezept stehen; das
@@ -16,8 +46,10 @@ class Recipe {
     this.servings,
     List<String>? ingredients,
     List<String>? steps,
+    List<RecipePhoto>? photos,
     this.description = '',
-    this.imageJpeg = '',
+    this._imageJpeg = '',
+    this.coverPhoto = '',
     this.prepMinutes,
     this.cookMinutes,
     this.totalMinutes,
@@ -34,6 +66,7 @@ class Recipe {
   })  : id = id ?? newId(),
         ingredients = ingredients ?? [],
         steps = steps ?? [],
+        photos = photos ?? [],
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now(),
         extra = extra ?? {};
@@ -49,10 +82,23 @@ class Recipe {
 
   /// Arbeitsschritte; Zeilen mit „:“ am Ende sind Abschnittsüberschriften.
   List<String> steps;
+
+  /// Eigene Fotos, z. B. die Kochbuchseite oder das fertige Gericht.
+  List<RecipePhoto> photos;
   String description;
 
   /// Vorschaubild (JPEG, Base64, höchstens ~640 px breit).
-  String imageJpeg;
+  String get imageJpeg => _imageJpeg;
+  set imageJpeg(String v) {
+    _imageJpeg = v;
+    _bytes = null;
+  }
+
+  String _imageJpeg;
+
+  /// Aus welchem eigenen Foto das Vorschaubild stammt (leer: aus dem
+  /// Originalrezept oder keines).
+  String coverPhoto;
   int? prepMinutes;
   int? cookMinutes;
   int? totalMinutes;
@@ -98,8 +144,10 @@ class Recipe {
         'servings': ?servings,
         'ingredients': ingredients,
         'steps': steps,
+        if (photos.isNotEmpty) 'photos': [for (final p in photos) p.toJson()],
         if (description.isNotEmpty) 'description': description,
         if (imageJpeg.isNotEmpty) 'image_jpeg': imageJpeg,
+        if (coverPhoto.isNotEmpty) 'cover_photo': coverPhoto,
         'prep_minutes': ?prepMinutes,
         'cook_minutes': ?cookMinutes,
         'total_minutes': ?totalMinutes,
@@ -116,7 +164,7 @@ class Recipe {
       };
 
   static const _known = {
-    'id', 'title', 'source_url', 'servings', 'ingredients', 'steps', 'description', 'image_jpeg',
+    'id', 'title', 'source_url', 'servings', 'ingredients', 'steps', 'photos', 'description', 'image_jpeg', 'cover_photo',
     'prep_minutes', 'cook_minutes', 'total_minutes', 'category', 'author', 'calories', 'notes',
     'added_by', 'created_at', 'updated_at', 'updated_by', 'last_used', 'schema_version',
   };
@@ -132,8 +180,10 @@ class Recipe {
       servings: servings != null && servings > 0 ? servings : null,
       ingredients: jStrings(j['ingredients']),
       steps: jStrings(j['steps']),
+      photos: photoList(j['photos']),
       description: jStr(j['description']),
       imageJpeg: jStr(j['image_jpeg']),
+      coverPhoto: jStr(j['cover_photo']),
       prepMinutes: jIntOrNull(j['prep_minutes']),
       cookMinutes: jIntOrNull(j['cook_minutes']),
       totalMinutes: jIntOrNull(j['total_minutes']),
@@ -150,3 +200,7 @@ class Recipe {
     );
   }
 }
+
+/// Fotoverweise eines Rezepts (tolerant: fehlende oder kaputte Einträge fallen weg).
+List<RecipePhoto> photoList(Object? v) =>
+    v is List ? v.map(RecipePhoto.tryParse).whereType<RecipePhoto>().toList() : [];

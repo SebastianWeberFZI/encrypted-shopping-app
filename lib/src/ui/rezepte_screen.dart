@@ -41,6 +41,12 @@ class _RezepteScreenState extends State<RezepteScreen> {
             onTap: () => Navigator.pop(c, 'link'),
           ),
           ListTile(
+            leading: const Icon(Icons.menu_book_outlined),
+            title: const Text('Kochbuchseite fotografieren'),
+            subtitle: const Text('Foto machen, Namen eingeben – fertig. Zutaten kannst du später ergänzen.'),
+            onTap: () => Navigator.pop(c, 'foto'),
+          ),
+          ListTile(
             leading: const Icon(Icons.edit_note),
             title: const Text('Eigenes Rezept eingeben'),
             subtitle: const Text('Aus dem Kochbuch, von Oma, aus dem Kopf'),
@@ -56,8 +62,9 @@ class _RezepteScreenState extends State<RezepteScreen> {
       ),
     );
     if (!mounted || wahl == null) return;
-    if (wahl == 'eigen') {
-      await Navigator.push(context, MaterialPageRoute(builder: (_) => RezeptEditor(state: state)));
+    if (wahl == 'eigen' || wahl == 'foto') {
+      await Navigator.push(
+          context, MaterialPageRoute(builder: (_) => RezeptEditor(state: state, mitFoto: wahl == 'foto')));
       return;
     }
     final clip = (await Clipboard.getData(Clipboard.kTextPlain))?.text ?? '';
@@ -145,6 +152,7 @@ class _RezepteScreenState extends State<RezepteScreen> {
       if (r.totalMinutes != null) _dauer(r.totalMinutes!),
       if (r.servings != null) '${r.servings} Portionen',
       if (r.sourceHost.isNotEmpty) r.sourceHost else 'eigenes Rezept',
+      if (r.photos.isNotEmpty) r.photos.length == 1 ? '1 Foto' : '${r.photos.length} Fotos',
     ].join(' · ');
     return Card(
       elevation: 0,
@@ -194,7 +202,7 @@ class _RezepteScreenState extends State<RezepteScreen> {
             const SizedBox(height: 8),
             Text(
               'Teile ein Rezept aus Chefkoch oder dem Browser an „Auf die Einkaufsliste“, '
-              'füge einen Link ein oder gib ein eigenes Rezept ein. Gespeicherte Rezepte '
+              'füge einen Link ein, fotografiere eine Kochbuchseite oder gib ein eigenes Rezept ein. Gespeicherte Rezepte '
               'sehen alle, die diese Einkaufsliste nutzen.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),

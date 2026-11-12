@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:uuid/uuid.dart';
 
+import 'core/blob_store.dart';
 import 'core/crypto_service.dart';
 import 'core/doc_store.dart';
 import 'core/github_api.dart';
@@ -56,6 +58,9 @@ class ShoppingRepository {
   SourceConfig? config;
   SecretKey? _key;
   DocStore? store;
+
+  /// Fotos zu Rezepten (werden erst beim Anzeigen geladen).
+  BlobStore? photos;
   GithubApi? api;
   SyncEngine? engine;
   bool syncing = false;
@@ -97,6 +102,7 @@ class ShoppingRepository {
     _key = SecretKey(base64Decode(cfg.masterKeyB64));
     store = DocStore(baseDir: '$baseDir/data', crypto: crypto, key: _key!);
     await store!.init();
+    photos = BlobStore(baseDir: '$baseDir/data/photos', remoteDir: 'photos', crypto: crypto, key: _key!);
     api = apiOverride ?? GithubApi(cfg.github);
     engine = SyncEngine(
       store: store!,
@@ -334,7 +340,10 @@ class ShoppingRepository {
     if (engine == null || syncing) return null;
     syncing = true;
     try {
+      // Fotos zuerst – das Rezept, das auf sie verweist, soll nicht vor ihnen ankommen.
+      await photos!.upload(api!, message: 'foto');
       final r = await engine!.sync();
+      await _photoGarbage();
       error = null;
       notice = r.newer > 0 ? kNewerDataHint : null;
       if (r.pulled > 0 || r.conflicts > 0 || r.newer > 0) touch();
@@ -349,6 +358,31 @@ class ShoppingRepository {
       syncing = false;
     }
     return null;
+  }
+
+  /// Fotos, auf die kein Rezept mehr verweist, entfernen. Nicht, solange
+  /// Rezepte im Format einer neueren App-Version vorliegen (deren Verweise
+  /// kennt diese Version vielleicht nicht).
+  Future<void> _photoGarbage() async {
+    final s = store, tree = engine?.lastTree;
+    if (s == null || tree == null) return;
+    if (s.unreadable.keys.any((p) => p.startsWith('recipes/'))) return;
+    final used = <String>{
+      for (final e in s.inDir('recipes'))
+        for (final p in photoList(e.value['photos'])) p.id,
+    };
+    try {
+      await photos!.collectGarbage(api!, tree, used, message: 'foto entfernen');
+    } catch (_) {
+      // Aufräumen ist nicht eilig – beim nächsten Abgleich erneut.
+    }
+  }
+
+  /// Foto laden (vom Gerät oder aus dem Repo); null, wenn es (noch) nicht da ist.
+  Future<Uint8List?> loadPhoto(String id) async {
+    final p = photos;
+    if (p == null) return null;
+    return p.load(id, api: api);
   }
 
   /// Fasst fremde Änderungen je Liste und Person zusammen.

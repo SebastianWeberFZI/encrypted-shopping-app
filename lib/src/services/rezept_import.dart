@@ -80,9 +80,17 @@ Future<String> ladeVorschaubild(Uri? url, {http.Client? client}) async {
 
 /// Verkleinert ein Bild auf höchstens 640 px Breite (JPEG, Qualität 72).
 String vorschaubild(Uint8List bytes) {
-  final bild = img.decodeImage(bytes);
-  if (bild == null) return '';
-  final klein = bild.width > 640 ? img.copyResize(bild, width: 640, interpolation: img.Interpolation.average) : bild;
+  final roh = img.decodeImage(bytes);
+  if (roh == null) return '';
+  return vorschauAus(img.bakeOrientation(roh));
+}
+
+/// Vorschaubild aus einem schon richtig gedrehten Bild (ohne Metadaten).
+String vorschauAus(img.Image bild) {
+  final klein = bild.width > 640
+      ? img.copyResize(bild, width: 640, interpolation: img.Interpolation.average)
+      : img.Image.from(bild);
+  klein.exif = img.ExifData();
   return base64Encode(img.encodeJpg(klein, quality: 72));
 }
 
