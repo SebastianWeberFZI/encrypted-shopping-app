@@ -242,7 +242,7 @@ private class ShoppingFactory(private val context: Context, private val widgetId
         val e = entries.getOrNull(position) ?: return RemoteViews(context.packageName, R.layout.widget_shopping_item)
         return RemoteViews(context.packageName, R.layout.widget_shopping_item).apply {
             setInt(R.id.tile_bg, "setColorFilter", color)
-            val icon = Piktos.bitmap(context, e.icon, 30)
+            val icon = Piktos.bitmap(context, e.icon, 32)
             if (icon != null) {
                 setImageViewBitmap(R.id.tile_icon, icon)
                 setViewVisibility(R.id.tile_icon, android.view.View.VISIBLE)

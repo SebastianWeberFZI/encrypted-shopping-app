@@ -57,8 +57,8 @@ class ItemTile extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(6, 8, 6, 6),
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               Opacity(
-                opacity: style == TileStyle.recent || style == TileStyle.catalog ? 0.85 : 1,
-                child: Pikto(icon: icon, name: name, emoji: emoji, size: 36),
+                opacity: style == TileStyle.recent || style == TileStyle.catalog ? 0.92 : 1,
+                child: Pikto(icon: icon, name: name, emoji: emoji, size: 40),
               ),
               const SizedBox(height: 6),
               // Lange Einzelwörter ("Spülmaschinentabs") verkleinern statt mitten im Wort umbrechen

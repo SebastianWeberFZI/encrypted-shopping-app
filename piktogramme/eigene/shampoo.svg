@@ -1,10 +1,11 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="10" y="2" width="12" height="4.5" rx="1.5" fill="#533566"/>
-<rect x="12" y="6" width="8" height="2.5" fill="#8D65C5"/>
-<path d="M10 8.5H22C24 8.5 25 10 25 12V27C25 28.7 23.7 30 22 30H10C8.3 30 7 28.7 7 27V12C7 10 8 8.5 10 8.5Z" fill="#8D65C5"/>
-<rect x="9.5" y="15" width="13" height="9" rx="1.5" fill="#FFFFFF"/>
-<circle cx="13.5" cy="19.5" r="2" fill="#CBA6F7"/>
-<circle cx="17.5" cy="18.5" r="1.5" fill="#CBA6F7"/>
-<circle cx="17" cy="21.8" r="1.2" fill="#CBA6F7"/>
-<rect x="8.6" y="11" width="1.4" height="16" rx="0.7" fill="#A98AD8"/>
+<rect x="10" y="2" width="12" height="4.5" rx="1.5" fill="#8D65C5"/>
+<rect x="12" y="6" width="8" height="2.5" fill="#533566"/>
+<path d="M10 8.5H22C24 8.5 25 10 25 12V27C25 28.7 23.7 30 22 30H10C8.3 30 7 28.7 7 27V12C7 10 8 8.5 10 8.5Z" fill="#F6F1FB"/>
+<path d="M7 21C11 18 18 24 25 20V27C25 28.7 23.7 30 22 30H10C8.3 30 7 28.7 7 27Z" fill="#CBA6F7"/>
+<rect x="10" y="12.5" width="12" height="6.5" rx="1.5" fill="#8D65C5"/>
+<circle cx="13.5" cy="15.7" r="1.6" fill="#CBA6F7"/>
+<circle cx="17.5" cy="15.2" r="1.2" fill="#CBA6F7"/>
+<circle cx="17.3" cy="17.4" r="0.9" fill="#CBA6F7"/>
+<rect x="8.6" y="11" width="1.4" height="9" rx="0.7" fill="#FFFFFF"/>
 </svg>

@@ -279,11 +279,12 @@ def _():
 
 @icon("champignons")
 def _():
-    cap, gill, stem = "#E9DCC9", "#C9B497", "#F7F1E8"
+    cap, gill, stem = "#DCC7A8", "#B39472", "#F4ECDF"
     return svg(rect(18.8, 17, 5.5, 11, stem, rx=2.5), path("M12 19.5C12 14.5 16.5 11 21.5 11C26.5 11 31 14.5 31 19.5Z", cap),
-               rect(12, 18.6, 19, 2.3, gill, rx=1.1), ell(18.5, 14, 2.4, 1.2, WHITE, -20),
+               rect(12, 18.6, 19, 2.3, gill, rx=1.1), ell(18.5, 14, 2.4, 1.2, "#EFE3D0", -20),
                rect(7.3, 16, 6.5, 13, stem, rx=3), path("M1 18.5C1 12 5.5 7.5 10.5 7.5C15.5 7.5 20 12 20 18.5Z", cap),
-               rect(1, 17.6, 19, 2.6, gill, rx=1.3), ell(6.5, 11.5, 2.6, 1.3, WHITE, -30))
+               rect(1, 17.6, 19, 2.6, gill, rx=1.3), ell(6.5, 11.5, 2.6, 1.3, "#EFE3D0", -30),
+               rect(8.3, 25.8, 4.5, 1.2, "#D9CDBB", rx=0.6), rect(19.8, 25, 3.5, 1, "#D9CDBB", rx=0.5))
 
 
 @icon("erbsen")
@@ -483,18 +484,20 @@ def _():
 
 @icon("mozzarella")
 def _():
-    return svg(ell(16, 27, 12, 2.6, "#DCE6EE"), circ(11, 18.5, 8, WHITE), circ(22, 20, 6.8, "#F2F4F7"),
-               circ(8.5, 15.5, 2, "#FFFFFF"), ell(11, 23.5, 5, 1.4, "#E8EEF4"), ell(22, 24.6, 4.4, 1.2, "#E2E9F0"),
+    return svg(ell(16, 27, 12, 2.6, "#D3DDE7"), circ(11, 18.5, 8, WHITE), circ(22, 20, 6.8, "#F2F4F7"),
+               path("M3.2 20C4 24 7.2 26.5 11 26.5C14.8 26.5 18 24 18.8 20C17 22.6 14.2 24 11 24C7.8 24 5 22.6 3.2 20Z", "#DCE4EC"),
+               path("M15.3 21.5C16 24.5 18.8 26.8 22 26.8C25.2 26.8 28 24.5 28.7 21.5C27.2 23.6 24.8 24.6 22 24.6C19.2 24.6 16.8 23.6 15.3 21.5Z", "#D5DEE7"),
+               circ(8.5, 15.5, 2, "#FFFFFF"),
                *leaf(20, 9, 3.6, 2, -30, GREEN, GREEN_M), *leaf(25, 9.8, 3, 1.7, 25, GREEN_M))
 
 
 
 @icon("feta")
 def _():
-    return svg(path("M4 12L10 7H28L22 12Z", "#F7F9FB"), path("M22 12L28 7V22L22 27Z", "#DCE3EA"),
-               rect(4, 12, 18, 15, WHITE, rx=0.6),
-               circ(8, 16.5, 0.9, "#E3E9EF"), circ(13, 21, 0.8, "#E3E9EF"), circ(17.5, 15.5, 0.9, "#E3E9EF"), circ(9.5, 23.5, 0.7, "#E3E9EF"),
-               circ(25, 28, 1.4, WHITE), circ(28.5, 26.5, 1, "#F2F4F7"), circ(6, 29, 1, WHITE))
+    return svg(path("M4 12L10 7H28L22 12Z", "#F7F9FB"), path("M22 12L28 7V22L22 27Z", "#D5DDE6"),
+               rect(4, 12, 18, 15, WHITE, rx=0.6), rect(4, 23, 18, 4, "#E6ECF2"),
+               circ(8, 16.5, 0.9, "#DCE3EA"), circ(13, 21, 0.8, "#DCE3EA"), circ(17.5, 15.5, 0.9, "#DCE3EA"), circ(9.5, 20.5, 0.7, "#DCE3EA"),
+               circ(25, 28, 1.4, "#EEF2F6"), circ(28.5, 26.5, 1, "#E6ECF2"), circ(6, 29, 1, "#EEF2F6"))
 
 
 # === Fleisch, Fisch & Tofu ===================================================
@@ -797,11 +800,14 @@ def _():
 
 @icon("spuelmaschinentabs")
 def _():
-    def tab(x, y, rot):
-        return g(f"rotate({rot} {x+6} {y+5})", rect(x, y, 13, 10, "#DCE6F0", rx=2), rect(x, y, 13, 5.5, WHITE, rx=2),
-                 rect(x, y + 3, 13, 2.5, WHITE), rect(x, y + 5.5, 13, 4.5, BLUE, rx=0), path(f"M{x} {y+5.5}H{x+13}V{y+8}C{x+13} {y+9.1} {x+12.1} {y+10} {x+11} {y+10}H{x+2}C{x+0.9} {y+10} {x} {y+9.1} {x} {y+8}Z", BLUE),
-                 circ(x + 6.5, y + 5.5, 2.3, RED), circ(x + 5.8, y + 4.8, 0.7, SALMON))
-    return svg(tab(3, 15, -10), tab(15.5, 9, 12), circ(8, 8, 2, BLUE_LL), circ(12, 4.5, 1.3, BLUE_LL), circ(27, 25, 1.5, BLUE_LL))
+    def tab(x, y, rot, s=1.0):
+        w, h = 15 * s, 11.5 * s
+        return g(f"rotate({rot} {x + w / 2} {y + h / 2})",
+                 rect(x, y, w, h, WHITE, rx=2.2),
+                 path(f"M{x} {y+h*0.52}H{x+w}V{y+h-2.2}C{x+w} {y+h-1} {x+w-1} {y+h} {x+w-2.2} {y+h}H{x+2.2}C{x+1} {y+h} {x} {y+h-1} {x} {y+h-2.2}Z", BLUE),
+                 rect(x, y + h * 0.48, w, h * 0.08, "#DCE6F0"),
+                 circ(x + w / 2, y + h * 0.52, 2.7 * s, RED), circ(x + w / 2 - 0.9, y + h * 0.52 - 0.9, 0.8 * s, SALMON))
+    return svg(tab(1.5, 15.5, -10), tab(15, 7.5, 12), circ(6, 8, 2.2, BLUE_LL), circ(10.5, 4, 1.4, BLUE_LL), circ(28, 25, 1.6, BLUE_LL), circ(24.5, 28.5, 1, BLUE_LL))
 
 
 @icon("waschmittel")
@@ -895,10 +901,11 @@ def _():
 # === Drogerie ================================================================
 @icon("shampoo")
 def _():
-    return svg(rect(10, 2, 12, 4.5, PURPLE_D, rx=1.5), rect(12, 6, 8, 2.5, PURPLE),
-               path("M10 8.5H22C24 8.5 25 10 25 12V27C25 28.7 23.7 30 22 30H10C8.3 30 7 28.7 7 27V12C7 10 8 8.5 10 8.5Z", PURPLE),
-               rect(9.5, 15, 13, 9, WHITE, rx=1.5), circ(13.5, 19.5, 2, PURPLE_L), circ(17.5, 18.5, 1.5, PURPLE_L), circ(17, 21.8, 1.2, PURPLE_L),
-               rect(8.6, 11, 1.4, 16, "#A98AD8", rx=0.7))
+    return svg(rect(10, 2, 12, 4.5, PURPLE, rx=1.5), rect(12, 6, 8, 2.5, PURPLE_D),
+               path("M10 8.5H22C24 8.5 25 10 25 12V27C25 28.7 23.7 30 22 30H10C8.3 30 7 28.7 7 27V12C7 10 8 8.5 10 8.5Z", "#F6F1FB"),
+               path("M7 21C11 18 18 24 25 20V27C25 28.7 23.7 30 22 30H10C8.3 30 7 28.7 7 27Z", PURPLE_L),
+               rect(10, 12.5, 12, 6.5, PURPLE, rx=1.5), circ(13.5, 15.7, 1.6, PURPLE_L), circ(17.5, 15.2, 1.2, PURPLE_L), circ(17.3, 17.4, 0.9, PURPLE_L),
+               rect(8.6, 11, 1.4, 9, WHITE, rx=0.7))
 
 
 @icon("duschgel")
