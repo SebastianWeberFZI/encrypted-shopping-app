@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -8,6 +10,7 @@ import '../background/background_worker.dart';
 import '../core/werkstatt.dart';
 import '../werkstatt/demo_data.dart';
 import 'lists_screen.dart';
+import 'log_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key, required this.state});
@@ -166,7 +169,7 @@ class SettingsScreen extends StatelessWidget {
             FutureBuilder<bool>(
               future: ShoppingWidget.canPin(),
               builder: (c, snap) => snap.data == true
-                  ? Column(children: [
+                  ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       header('Widget'),
                       ListTile(
                         leading: const Icon(Icons.widgets_outlined),
@@ -191,6 +194,17 @@ class SettingsScreen extends StatelessWidget {
               title: const Text('Lizenzen'),
               subtitle: const Text('Symbole: Fluent Emoji von Microsoft (MIT) und eigene Ergänzungen'),
               onTap: () => showLicensePage(context: context, applicationName: 'Einkaufsliste'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long_outlined),
+              title: const Text('Protokoll'),
+              subtitle: const Text('Was beim Abgleich passiert – zum Ablegen im Download-Ordner'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => LogScreen(
+                          folder: 'Einkaufsliste-Protokoll', prefix: 'einkauf', info: _logInfo))),
             ),
             if (kWerkstatt && defaultTargetPlatform == TargetPlatform.android)
               ListTile(
@@ -220,6 +234,32 @@ class SettingsScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Begleittext zum exportierten Protokoll (keine Schlüssel oder Tokens).
+  Future<String> _logInfo() async {
+    final p = await PackageInfo.fromPlatform();
+    final repo = state.repo;
+    final cfg = repo.config;
+    final store = repo.store;
+    final b = StringBuffer()
+      ..writeln('Einkaufsliste ${p.version}+${p.buildNumber}${kWerkstatt ? ' (Werkstatt)' : ''}')
+      ..writeln('Exportiert: ${DateTime.now().toIso8601String()}')
+      ..writeln('System: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}')
+      ..writeln('Name: ${state.settings.userName}')
+      ..writeln();
+    if (cfg != null) b.writeln('Repo: ${cfg.owner}/${cfg.repo} @ ${cfg.branch}');
+    if (store != null) {
+      b.writeln('letzter Sync: ${store.lastSync?.toIso8601String() ?? '–'}, '
+          'Einträge: ${store.docs.length}, ausstehend: ${store.pendingCount}');
+      for (final op in store.pending) {
+        b.writeln('  ausstehend: ${op.isDelete ? 'löschen' : 'senden'} ${op.path} '
+            'seit ${op.at.toIso8601String()} (${op.known.length} bekannte Stände)');
+      }
+    }
+    if (repo.error != null) b.writeln('Fehler: ${repo.error}');
+    if (repo.notice != null) b.writeln('Hinweis: ${repo.notice}');
+    return b.toString();
   }
 
   static String _fmt(DateTime d) =>

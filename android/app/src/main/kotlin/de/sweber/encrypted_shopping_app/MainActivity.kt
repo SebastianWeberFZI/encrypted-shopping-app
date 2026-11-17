@@ -29,6 +29,8 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FileExport.CHANNEL)
+            .setMethodCallHandler { call, result -> FileExport.handle(this, call, result) }
     }
 
     override fun onNewIntent(intent: Intent) {

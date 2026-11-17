@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:uuid/uuid.dart';
 
+import 'core/app_log.dart';
 import 'core/blob_store.dart';
 import 'core/crypto_service.dart';
 import 'core/doc_store.dart';
@@ -110,6 +111,11 @@ class ShoppingRepository {
       crypto: crypto,
       key: _key!,
       managedDirs: const ['lists', 'items', 'catalog', 'activity', 'recipes'],
+      logTag: 'sync',
+      // Der Einkaufsstatus eines Artikels samt Verlauf gehört zusammen.
+      mergeGroups: const [
+        {'status', 'added_by', 'added_at', 'done_by', 'done_at', 'purchase_count', 'purchase_history'},
+      ],
       // Keine Konfliktkopien: eine doppelte "Milch" wäre schlimmer als ein
       // verlorener Zwischenstand.
     );
@@ -119,6 +125,7 @@ class ShoppingRepository {
   Future<bool> reloadIfChangedOnDisk() async {
     if (store == null || !await store!.changedOnDisk()) return false;
     await store!.init();
+    AppLog.info('sync', 'Stand von der Platte neu geladen (Hintergrund-Abgleich)');
     touch();
     return true;
   }
@@ -346,13 +353,14 @@ class ShoppingRepository {
       await _photoGarbage();
       error = null;
       notice = r.newer > 0 ? kNewerDataHint : null;
-      if (r.pulled > 0 || r.conflicts > 0 || r.newer > 0) touch();
+      if (r.reloaded || r.pulled > 0 || r.conflicts > 0 || r.merged > 0 || r.newer > 0) touch();
       return r;
     } on RepoTooNewException catch (e) {
       error = e.message;
     } on GithubApiException catch (e) {
       error = e.isUnauthorized ? 'Token ungültig oder abgelaufen.' : 'Sync fehlgeschlagen: ${e.message}';
     } catch (e) {
+      AppLog.warn('sync', 'Abgleich abgebrochen: $e');
       error = 'Keine Verbindung – Änderungen werden später übertragen.';
     } finally {
       syncing = false;

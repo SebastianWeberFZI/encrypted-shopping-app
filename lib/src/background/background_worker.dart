@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:workmanager/workmanager.dart';
 
+import '../core/app_log.dart';
 import '../core/source_config.dart';
 import '../core/werkstatt.dart';
 import '../services/notification_service.dart';
@@ -23,8 +24,8 @@ void callbackDispatcher() {
     DartPluginRegistrant.ensureInitialized();
     try {
       await runBackgroundCycle(force: input?['force'] == true);
-    } catch (e) {
-      debugPrint('Hintergrund-Sync fehlgeschlagen: $e');
+    } catch (e, st) {
+      AppLog.error('hintergrund', 'Durchlauf fehlgeschlagen', e, e is Error ? st : null);
     }
     return true;
   });
@@ -32,12 +33,13 @@ void callbackDispatcher() {
 
 Future<void> runBackgroundCycle({bool force = false}) async {
   final settings = await LocalSettings.load();
+  final dir = await getApplicationSupportDirectory();
+  await AppLog.init(dir.path, process: 'bg');
   final beat = settings.foregroundBeat;
   if (!force && beat != null && DateTime.now().difference(beat).inMinutes < 3) {
     _log('übersprungen: App im Vordergrund (Herzschlag $beat)');
     return;
   }
-  final dir = await getApplicationSupportDirectory();
   final repo = ShoppingRepository(
       baseDir: dir.path, configStore: SourceConfigStore(), userName: () => settings.userName);
   await repo.open();
@@ -86,5 +88,6 @@ Future<void> triggerBackgroundOnce({Duration delay = const Duration(seconds: 15)
 }
 
 void _log(String m) {
+  AppLog.info('hintergrund', m);
   if (kWerkstatt) debugPrint('[Hintergrund] $m');
 }
