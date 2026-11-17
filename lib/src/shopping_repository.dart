@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
@@ -359,6 +360,10 @@ class ShoppingRepository {
       error = e.message;
     } on GithubApiException catch (e) {
       error = e.isUnauthorized ? 'Token ungültig oder abgelaufen.' : 'Sync fehlgeschlagen: ${e.message}';
+    } on FileSystemException catch (e) {
+      AppLog.warn('sync', 'Abgleich abgebrochen: $e');
+      error = 'Speicherfehler auf dem Gerät (${e.runtimeType}) – wird beim nächsten Abgleich '
+          'erneut versucht, Einzelheiten im Protokoll.';
     } catch (e) {
       AppLog.warn('sync', 'Abgleich abgebrochen: $e');
       error = 'Keine Verbindung – Änderungen werden später übertragen.';
