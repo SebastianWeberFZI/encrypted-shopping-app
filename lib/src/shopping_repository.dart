@@ -113,6 +113,9 @@ class ShoppingRepository {
       key: _key!,
       managedDirs: const ['lists', 'items', 'catalog', 'activity', 'recipes'],
       logTag: 'sync',
+      // Einmalig jedes Dokument mit dem Repo vergleichen (verlorene
+      // Vormerkungen aus 0.1.5/0.1.6 nachsenden) – das Repo ist klein.
+      autoVerify: true,
       // Der Einkaufsstatus eines Artikels samt Verlauf gehört zusammen.
       mergeGroups: const [
         {'status', 'added_by', 'added_at', 'done_by', 'done_at', 'purchase_count', 'purchase_history'},
@@ -123,10 +126,11 @@ class ShoppingRepository {
     touch();
   }
 
+  /// Holt, was Widget oder Hintergrund-Abgleich inzwischen gespeichert
+  /// haben, in den Speicher.
   Future<bool> reloadIfChangedOnDisk() async {
-    if (store == null || !await store!.changedOnDisk()) return false;
-    await store!.init();
-    AppLog.info('sync', 'Stand von der Platte neu geladen (Hintergrund-Abgleich)');
+    if (store == null || !await store!.refresh()) return false;
+    AppLog.info('sync', 'Stand von der Platte aktualisiert (Widget oder Hintergrund)');
     touch();
     return true;
   }
@@ -313,7 +317,7 @@ class ShoppingRepository {
 
   Future<void> deleteList(ShoppingList l) async {
     for (final i in items.where((i) => i.listId == l.id).toList()) {
-      await store!.delete(i.path, persistState: false);
+      await store!.delete(i.path);
     }
     await store!.delete(l.path);
     touch();
@@ -336,25 +340,26 @@ class ShoppingRepository {
   Future<void> cleanupActivities() async {
     final limit = DateTime.now().subtract(const Duration(days: 7));
     for (final a in activities.where((a) => a.at.isBefore(limit)).toList()) {
-      await store!.delete(a.path, persistState: false);
+      await store!.delete(a.path);
     }
-    await store!.saveState();
     touch();
   }
 
   // ------------------------------------------------------------ Sync
 
-  Future<SyncResult?> sync() async {
+  /// [verify]: zusätzlich jedes Dokument mit dem Repo vergleichen und
+  /// Abweichungen beheben (Prüfabgleich).
+  Future<SyncResult?> sync({bool verify = false}) async {
     if (engine == null || syncing) return null;
     syncing = true;
     try {
       // Fotos zuerst – das Rezept, das auf sie verweist, soll nicht vor ihnen ankommen.
       await photos!.upload(api!, message: 'foto');
-      final r = await engine!.sync();
+      final r = await engine!.sync(verify: verify);
       await _photoGarbage();
       error = null;
       notice = r.newer > 0 ? kNewerDataHint : null;
-      if (r.reloaded || r.pulled > 0 || r.conflicts > 0 || r.merged > 0 || r.newer > 0) touch();
+      if (r.reloaded || r.pulled > 0 || r.conflicts > 0 || r.merged > 0 || r.repairedIn > 0 || r.newer > 0) touch();
       return r;
     } on RepoTooNewException catch (e) {
       error = e.message;

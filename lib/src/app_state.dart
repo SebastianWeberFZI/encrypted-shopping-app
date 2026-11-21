@@ -201,6 +201,30 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   // ------------------------------------------------------------ Sync
 
+  /// Prüfabgleich: jeden Artikel mit dem Repo vergleichen und Abweichungen
+  /// beheben. Liefert eine Zusammenfassung für die Anzeige.
+  Future<String> verifyNow() async {
+    if (!repo.isOpen) return 'Nicht verbunden';
+    while (syncing) {
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+    syncing = true;
+    notifyListeners();
+    try {
+      final r = await repo.sync(verify: true);
+      if (r == null) return repo.error ?? 'Abgleich nicht möglich';
+      if (r.pulled + r.repairedIn > 0) _scheduleWidget();
+      if (r.repairedOut + r.repairedIn == 0) return 'Alles stimmt mit GitHub überein';
+      return [
+        if (r.repairedOut > 0) '${r.repairedOut} nie gesendete Änderung${r.repairedOut == 1 ? '' : 'en'} nachgesendet',
+        if (r.repairedIn > 0) '${r.repairedIn} veraltete${r.repairedIn == 1 ? 'r Artikel' : ' Artikel'} aktualisiert',
+      ].join(', ');
+    } finally {
+      syncing = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> syncNow({bool silent = false}) async {
     if (syncing || !repo.isOpen) return;
     syncing = true;
@@ -219,7 +243,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           toast.value = texts.join('\n');
         }
         if (r.pulled > 0) await repo.cleanupActivities();
-        if (r.pulled > 0) _scheduleWidget();
+        if (r.pulled + r.repairedIn > 0) _scheduleWidget();
       }
       if (!silent) toast.value ??= repo.error ?? repo.notice ?? 'Alles aktuell';
     } finally {

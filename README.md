@@ -35,7 +35,8 @@ Beim ersten Start fragt die App nach dem privaten Daten-Repo, einem Fine-grained
 
 ## Protokoll
 - Die App notiert lokal, was beim Abgleich passiert (gesendet, empfangen, Konflikte mit den abweichenden
-  Feldern, Fehler) – eine Datei je Tag, 14 Tage, App (`[ui]`) und Hintergrund (`[bg]`) gemeinsam.
+  Feldern, Fehler) – eine Datei je Tag, 14 Tage, App (`[ui]`), Widget/Sperrbildschirm (`[widget]`) und
+  Hintergrund (`[bg]`) gemeinsam.
 - Einstellungen → Info → **Protokoll**: ansehen, löschen oder „In Download ablegen“. Die Dateien landen unter
   `Download/Einkaufsliste-Protokoll/` (`einkauf-JJJJ-MM-TT.txt` plus `einkauf-info.txt`) und lassen sich per
   USB-Kabel auf den Rechner ziehen. Schlüssel und Tokens stehen nicht darin.
@@ -43,6 +44,11 @@ Beim ersten Start fragt die App nach dem privaten Daten-Repo, einem Fine-grained
   Änderungen zusammengeführt. Nur wenn dasselbe Feld verschieden geändert wurde, gewinnt wie bisher die
   jüngere Fassung (ohne Kopie). Gleicher Inhalt oder ein bloß veralteter Stand aus dem Hintergrund-Abgleich
   zählen nicht als Konflikt.
+- App, Widget/Sperrbildschirm und Hintergrund-Abgleich arbeiten mit eigenen Kopien im Speicher. Jede lokale
+  Änderung bekommt deshalb einen eigenen Eintrag im Änderungs-Journal (`pending/`), den kein anderer Teil
+  überschreiben kann; den Sync-Zustand schreibt nur der Abgleich unter der Sync-Sperre.
+- Einstellungen → Verbindung → **Mit GitHub vergleichen** prüft jeden Artikel gegen das Repo und sendet
+  Änderungen nach, die nie angekommen sind (läuft nach dem Update auf 0.1.7 einmal von selbst).
 
 ## Daten-Repo
 ```

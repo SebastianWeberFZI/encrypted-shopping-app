@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../core/app_log.dart';
 import '../core/source_config.dart';
 import '../models/pikto.dart';
 import '../settings.dart';
@@ -97,17 +98,21 @@ Future<void> shoppingWidgetCallback(Uri? uri) async {
   DartPluginRegistrant.ensureInitialized();
   final settings = await LocalSettings.load();
   final dir = await getApplicationSupportDirectory();
+  await AppLog.init(dir.path, process: 'widget');
   final repo = ShoppingRepository(
       baseDir: dir.path, configStore: SourceConfigStore(), userName: () => settings.userName);
   await repo.open();
   if (!repo.isOpen) return;
   final item = repo.items.where((i) => i.id == id).firstOrNull;
-  if (item != null && item.needed) await repo.markBought(item);
+  if (item != null && item.needed) {
+    await repo.markBought(item);
+    AppLog.info('widget', 'abgehakt: ${item.name} (${item.path})');
+  }
   await ShoppingWidget.update(repo, settings);
   try {
     await repo.sync();
   } catch (e) {
-    debugPrint('Widget-Abgleich fehlgeschlagen: $e');
+    AppLog.warn('widget', 'Abgleich fehlgeschlagen: $e');
   }
   await ShoppingWidget.update(repo, settings);
 }

@@ -144,6 +144,20 @@ class SettingsScreen extends StatelessWidget {
                     (state.repo.lastSync == null ? 'noch nicht synchronisiert' : 'Letzter Abgleich ${_fmt(state.repo.lastSync!)}')),
                 trailing: IconButton(icon: const Icon(Icons.sync), onPressed: () => state.syncNow()),
               ),
+            if (cfg != null)
+              ListTile(
+                leading: const Icon(Icons.fact_check_outlined),
+                title: const Text('Mit GitHub vergleichen'),
+                subtitle: const Text('Prüft jeden Artikel und sendet Änderungen nach, die nie angekommen sind'),
+                onTap: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  messenger.showSnackBar(const SnackBar(content: Text('Vergleiche mit GitHub …')));
+                  final text = await state.verifyNow();
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(content: Text(text)));
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.link_off),
               title: const Text('Verbindung trennen'),
